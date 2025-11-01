@@ -3,73 +3,324 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dining Services</title>
+  <title>Crave • Smart Dining & Food Ordering</title>
+  <meta name="description" content="Tell us what you're craving. Get AI‑powered recommendations and order in seconds from top restaurants near you." />
+
+  <!-- Open Graph / Twitter for rich preview -->
+  <meta property="og:title" content="Crave – Smart Dining & Food Ordering" />
+  <meta property="og:description" content="AI‑powered picks. Beautiful menu. Fast checkout." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=1200&q=80&auto=format&fit=crop" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+  <!-- Favicons (optional) -->
+  <link rel="icon" href="/static/favicon.ico" />
+
+  <!-- Simple CSS tweaks -->
+  <style>
+    .glass { backdrop-filter: blur(10px); background: rgba(255,255,255,0.7); }
+    .card { transition: transform .15s ease, box-shadow .15s ease; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+  </style>
 </head>
-<body class="bg-gray-50">
-  <header class="max-w-5xl mx-auto p-6">
-    <h1 class="text-3xl font-bold">Delicious, fast. ✨</h1>
-    <p class="text-gray-600">Tell the assistant what you crave, get smart picks, and order in seconds.</p>
+<body class="bg-gradient-to-b from-amber-50 to-white text-gray-900">
+  <!-- NAVBAR -->
+  <header class="sticky top-0 z-40 bg-white/70 backdrop-blur border-b border-amber-100">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-2 font-bold text-xl">
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-white">🍽️</span>
+        Crave
+      </a>
+      <nav class="hidden md:flex items-center gap-6 text-sm">
+        <a href="#how" class="hover:text-amber-700">How it works</a>
+        <a href="#picks" class="hover:text-amber-700">Top picks</a>
+        <a href="#faq" class="hover:text-amber-700">FAQ</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        <a href="#" class="text-sm hover:text-amber-700">Sign in</a>
+        <a href="#picks" class="text-sm px-3 py-2 rounded-xl bg-amber-600 text-white hover:bg-amber-700">Browse menu</a>
+      </div>
+    </div>
   </header>
 
-  <main class="max-w-5xl mx-auto p-6 grid gap-8">
-    <section id="hero" class="bg-white rounded-2xl shadow p-6">
-      <div class="flex flex-col md:flex-row items-center gap-6">
-        <div class="flex-1">
-          <h2 class="text-2xl font-semibold mb-2">What are you in the mood for?</h2>
-          <div class="flex gap-2">
-            <input id="agent-input" class="border rounded-xl px-4 py-2 w-full" placeholder="Try: vegan spicy noodles" />
-            <button id="agent-send" class="px-4 py-2 rounded-xl bg-black text-white">Ask</button>
+  <!-- HERO -->
+  <section class="relative">
+    <div class="absolute inset-0 -z-10">
+      <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=1600&auto=format&fit=crop" alt="hero" class="w-full h-[480px] object-cover"/>
+      <div class="absolute inset-0 bg-gradient-to-b from-black/40 to-black/10"></div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 pt-20 pb-16">
+      <div class="glass rounded-3xl p-6 md:p-10 shadow-xl">
+        <div class="grid md:grid-cols-2 gap-8 items-center">
+          <div>
+            <h1 class="text-3xl md:text-5xl font-extrabold leading-tight">
+              Crave it. <span class="text-amber-600">We recommend it.</span> Order instantly.
+            </h1>
+            <p class="mt-3 text-gray-700 md:text-lg">Type your cravings or dietary needs. Our AI suggests dishes you'll love — from nearby kitchens — then you checkout in a tap.</p>
+
+            <!-- Quick chips -->
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button class="chip px-3 py-1 rounded-full bg-white border text-sm" data-chip="vegan">Vegan</button>
+              <button class="chip px-3 py-1 rounded-full bg-white border text-sm" data-chip="spicy">Spicy</button>
+              <button class="chip px-3 py-1 rounded-full bg-white border text-sm" data-chip="thai">Thai</button>
+              <button class="chip px-3 py-1 rounded-full bg-white border text-sm" data-chip="gluten-free">Gluten‑free</button>
+              <button class="chip px-3 py-1 rounded-full bg-white border text-sm" data-chip="dessert">Dessert</button>
+            </div>
+
+            <!-- Agent input -->
+            <div class="mt-4 flex gap-2">
+              <input id="agent-input" class="flex-1 px-4 py-3 rounded-2xl border outline-none focus:ring-2 focus:ring-amber-500" placeholder="Try: ‘vegan spicy noodles’ or ‘high‑protein bowls’"/>
+              <button id="agent-send" class="px-5 py-3 rounded-2xl bg-amber-600 text-white hover:bg-amber-700">Find my meal</button>
+            </div>
+
+            <!-- Social proof -->
+            <div class="mt-4 text-sm text-gray-600 flex items-center gap-4">
+              <span>⭐️⭐️⭐️⭐️⭐️ Rated by 2,500+ diners</span>
+              <span>•</span>
+              <span>Secure checkout</span>
+            </div>
           </div>
-          <p class="text-sm text-gray-500 mt-2">The assistant understands cuisines, diets, and flavors.</p>
+          <div class="hidden md:block">
+            <img src="https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1000&auto=format&fit=crop" alt="food" class="rounded-3xl shadow-2xl"/>
+          </div>
         </div>
-        <img src="https://images.unsplash.com/photo-1604908554029-b7e1953b9b05?q=80&w=800&auto=format&fit=crop" alt="food" class="rounded-2xl w-64 h-40 object-cover" />
-      </div>
-      <div id="agent-results" class="mt-6 grid md:grid-cols-3 gap-4"></div>
-    </section>
 
-    <section class="bg-white rounded-2xl shadow p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-semibold">Recommended for you</h2>
-        <button id="refresh-recs" class="text-sm underline">Refresh</button>
+        <!-- Agent results inline -->
+        <div id="agent-results" class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </div>
-      <div id="recs" class="grid md:grid-cols-3 gap-4"></div>
-    </section>
-  </main>
+    </div>
+  </section>
 
+  <!-- TRUST BAR -->
+  <section class="bg-white border-y">
+    <div class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+      <div class="flex items-center gap-3"><span class="text-2xl">⚡</span><div><div class="font-semibold">Fast delivery</div><div class="text-gray-600">Average 32 minutes</div></div></div>
+      <div class="flex items-center gap-3"><span class="text-2xl">🛡️</span><div><div class="font-semibold">Secure payments</div><div class="text-gray-600">PCI‑compliant checkout</div></div></div>
+      <div class="flex items-center gap-3"><span class="text-2xl">🥗</span><div><div class="font-semibold">Diet‑friendly</div><div class="text-gray-600">Vegan, GF, halal</div></div></div>
+      <div class="flex items-center gap-3"><span class="text-2xl">🏆</span><div><div class="font-semibold">Top restaurants</div><div class="text-gray-600">Hand‑picked partners</div></div></div>
+    </div>
+  </section>
+
+  <!-- TOP PICKS -->
+  <section id="picks" class="py-12">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl md:text-3xl font-bold">Recommended for you</h2>
+        <div class="flex items-center gap-2">
+          <button id="refresh-recs" class="text-sm underline">Refresh</button>
+        </div>
+      </div>
+      <div id="recs" class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how" class="py-12 bg-amber-50/60">
+    <div class="max-w-6xl mx-auto px-4">
+      <h2 class="text-2xl md:text-3xl font-bold">How it works</h2>
+      <div class="mt-6 grid md:grid-cols-3 gap-6">
+        <div class="card bg-white rounded-2xl p-6 border">
+          <div class="text-3xl">🎯</div>
+          <div class="font-semibold mt-2">Tell us what you want</div>
+          <p class="text-gray-600 text-sm mt-1">Type cravings or dietary needs. The assistant understands cuisines, spice level, macros, and more.</p>
+        </div>
+        <div class="card bg-white rounded-2xl p-6 border">
+          <div class="text-3xl">🤖</div>
+          <div class="font-semibold mt-2">AI picks your matches</div>
+          <p class="text-gray-600 text-sm mt-1">We blend your taste history with menu tags and popularity to surface spot‑on dishes.</p>
+        </div>
+        <div class="card bg-white rounded-2xl p-6 border">
+          <div class="text-3xl">🧾</div>
+          <div class="font-semibold mt-2">Checkout in seconds</div>
+          <p class="text-gray-600 text-sm mt-1">Add to cart and pay securely. We ping the kitchen and keep you posted.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="py-12">
+    <div class="max-w-6xl mx-auto px-4">
+      <h2 class="text-2xl md:text-3xl font-bold">Loved by foodies</h2>
+      <div class="mt-6 grid md:grid-cols-3 gap-6" id="testimonials">
+        <div class="card bg-white rounded-2xl p-6 border">
+          <p class="text-gray-700">“The recommendations are scary good. It knew I like spicy & vegan.”</p>
+          <div class="mt-3 text-sm text-gray-500">— Maya R.</div>
+        </div>
+        <div class="card bg-white rounded-2xl p-6 border">
+          <p class="text-gray-700">“Fastest checkout flow I’ve used. My go‑to lunch app now.”</p>
+          <div class="mt-3 text-sm text-gray-500">— Daniel P.</div>
+        </div>
+        <div class="card bg-white rounded-2xl p-6 border">
+          <p class="text-gray-700">“Great for gluten‑free options. Filters actually work.”</p>
+          <div class="mt-3 text-sm text-gray-500">— Alicia K.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="py-12 bg-white border-t">
+    <div class="max-w-6xl mx-auto px-4">
+      <h2 class="text-2xl md:text-3xl font-bold">Frequently asked</h2>
+      <div class="mt-6 space-y-3" id="faq-list">
+        <details class="bg-amber-50/60 rounded-xl p-4 border">
+          <summary class="font-semibold cursor-pointer">How do recommendations work?</summary>
+          <p class="mt-2 text-sm text-gray-700">We use your clicks and orders to learn preferences, then match menu tags (cuisine, diet, spice) and popularity. No spammy stuff.</p>
+        </details>
+        <details class="bg-amber-50/60 rounded-xl p-4 border">
+          <summary class="font-semibold cursor-pointer">Can I filter by dietary needs?</summary>
+          <p class="mt-2 text-sm text-gray-700">Yes — vegan, vegetarian, halal, gluten‑free, low‑carb, and more. Type them in or tap the chips.</p>
+        </details>
+        <details class="bg-amber-50/60 rounded-xl p-4 border">
+          <summary class="font-semibold cursor-pointer">Is checkout secure?</summary>
+          <p class="mt-2 text-sm text-gray-700">Payments are processed via industry‑standard providers using HTTPS and PCI‑compliant flows.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="py-10 bg-gray-900 text-gray-300">
+    <div class="max-w-6xl mx-auto px-4 grid md:grid-cols-4 gap-8">
+      <div>
+        <div class="flex items-center gap-2 font-bold text-lg text-white"><span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500">🍽️</span>Crave</div>
+        <p class="mt-2 text-sm">AI‑powered dining. Discover dishes you’ll love.</p>
+      </div>
+      <div>
+        <div class="font-semibold text-white">Explore</div>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li><a href="#picks" class="hover:text-white">Top picks</a></li>
+          <li><a href="#how" class="hover:text-white">How it works</a></li>
+          <li><a href="#faq" class="hover:text-white">FAQ</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="font-semibold text-white">Company</div>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li><a href="#" class="hover:text-white">About</a></li>
+          <li><a href="#" class="hover:text-white">Careers</a></li>
+          <li><a href="#" class="hover:text-white">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="font-semibold text-white">Legal</div>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li><a href="#" class="hover:text-white">Privacy</a></li>
+          <li><a href="#" class="hover:text-white">Terms</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="max-w-6xl mx-auto px-4 mt-8 text-xs text-gray-500">© <span id="yr"></span> Crave. All rights reserved.</div>
+  </footer>
+
+  <!-- Floating cart button -->
+  <button id="cart-fab" class="fixed bottom-5 right-5 px-4 py-3 rounded-2xl bg-black text-white shadow-2xl flex items-center gap-2">
+    🛒 <span id="cart-count" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-600 text-xs">0</span>
+    <span class="hidden sm:inline">View cart</span>
+  </button>
+
+  <!-- JSON-LD (basic) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Crave",
+    "url": "https://example.com",
+    "potentialAction": {"@type": "SearchAction", "target": "https://example.com/?q={search_term}", "query-input": "required name=search_term"}
+  }
+  </script>
+
+  <!-- Page scripts -->
   <script>
-    async function loadRecs() {
-      const r = await fetch('/api/recommendations/');
-      const j = await r.json();
-      renderCards(document.getElementById('recs'), j.results);
-    }
-    function renderCards(root, items) {
-      root.innerHTML = items.map(x => `
-        <div class="border rounded-2xl p-4 hover:shadow">
-          <div class="font-semibold">${x.name}</div>
-          <div class="text-sm text-gray-500">$${x.price}</div>
-          <p class="text-sm mt-1">${x.description ?? ''}</p>
-          <div class="flex flex-wrap gap-1 mt-2">
-            ${(x.tags||[]).map(t => `<span class="text-xs bg-gray-100 px-2 py-1 rounded-full">${t.name}</span>`).join('')}
-          </div>
-          <button class="mt-3 text-sm px-3 py-1 rounded-xl bg-black text-white" onclick="addToCart(${x.id})">Add to cart</button>
-        </div>
-      `).join('');
-    }
-    async function addToCart(id) {
-      await fetch('/api/cart/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({menu_item:id, qty:1})});
-      alert('Added to cart!');
-    }
-    document.getElementById('refresh-recs').onclick = loadRecs;
+    const recsRoot = document.getElementById('recs');
+    const agentResults = document.getElementById('agent-results');
+    const cartCount = document.getElementById('cart-count');
+    document.getElementById('yr').textContent = new Date().getFullYear();
 
+    // Helpers
+    const fmt = (n) => Number(n).toFixed(2);
+    function cardHTML(x){
+      const tags = (x.tags||[]).map(t=>`<span class="text-xs bg-gray-100 px-2 py-1 rounded-full">${t.name}</span>`).join('');
+      return `
+        <div class="card bg-white rounded-2xl p-4 border">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="font-semibold text-lg">${x.name}</div>
+              <div class="text-sm text-gray-500">$${fmt(x.price)}</div>
+            </div>
+            <button class="text-xs px-3 py-1 rounded-xl bg-black text-white" onclick="addToCart(${x.id})">Add</button>
+          </div>
+          <p class="text-sm text-gray-700 mt-2">${x.description ?? ''}</p>
+          <div class="flex flex-wrap gap-1 mt-3">${tags}</div>
+        </div>`;
+    }
+    function renderCards(root, items){ root.innerHTML = items.map(cardHTML).join(''); }
+
+    // Load recommendations
+    async function loadRecs(){
+      try{
+        const r = await fetch('/api/recommendations/');
+        const j = await r.json();
+        renderCards(recsRoot, j.results || []);
+      } catch(e){ console.error(e); }
+    }
+
+    // Agent
+    document.querySelectorAll('.chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const input = document.getElementById('agent-input');
+        const w = btn.getAttribute('data-chip');
+        input.value = (input.value ? input.value + ' ' : '') + w;
+        input.focus();
+      });
+    });
     document.getElementById('agent-send').onclick = async () => {
-      const msg = document.getElementById('agent-input').value;
+      const msg = document.getElementById('agent-input').value.trim();
+      if(!msg) return;
       const r = await fetch('/api/agent/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message: msg})});
       const j = await r.json();
-      renderCards(document.getElementById('agent-results'), j.suggestions);
+      renderCards(agentResults, j.suggestions || []);
+      agentResults.scrollIntoView({behavior:'smooth', block:'start'});
     };
+
+    // Cart helpers
+    async function refreshCartCount(){
+      try{
+        const r = await fetch('/api/cart/');
+        const j = await r.json();
+        const n = (j.items||[]).reduce((s, it)=> s + (it.qty||0), 0);
+        cartCount.textContent = n;
+      } catch(e){ console.error(e); }
+    }
+    async function addToCart(id){
+      try{
+        await fetch('/api/cart/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({menu_item:id, qty:1})});
+        refreshCartCount();
+        toast('Added to cart');
+      } catch(e){ console.error(e); toast('Error adding to cart'); }
+    }
+    window.addToCart = addToCart;
+
+    document.getElementById('refresh-recs').onclick = loadRecs;
+    document.getElementById('cart-fab').onclick = ()=> window.location.href = '/cart/';
+
+    // Tiny toast
+    function toast(msg){
+      const el = document.createElement('div');
+      el.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-xl shadow-xl';
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(()=> el.remove(), 1600);
+    }
+
+    // Init
     loadRecs();
+    refreshCartCount();
   </script>
 </body>
 </html>
