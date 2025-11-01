@@ -3,9 +3,12 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets
 from django.shortcuts import render
 from django.db.models import F
+from .agent import parse_message, search_candidates, rank
 from .models import MenuItem, Cart, CartItem, EventLog
 from .serializers import MenuItemSerializer, CartSerializer, CartItemCreateSerializer
 from .recommender import blended_recommendations, content_based_from_tags
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 def get_guest_token(request):
     tok = request.COOKIES.get('guest_token','')
@@ -57,23 +60,17 @@ class CartAPI(APIView):
                                 menu_item=mi, event_type='add')
         return Response({'ok': True}, status=201)
 
-class AgentAPI(APIView):
-    """
-    Very simple rule-based conversational agent:
-    - Extracts tag-like keywords from 'message' (e.g., 'spicy', 'vegan', 'thai')
-    - Returns recommended items and suggested next action
-    """
-    TAG_KEYWORDS = {'vegan','vegetarian','gluten-free','spicy','mild','thai','indian','mexican','dessert','salad','low-carb','halal'}
 
+@method_decorator(csrf_exempt, name="dispatch")
+class AgentAPI(APIView):
     def post(self, request):
-        msg = (request.data.get('message') or '').lower()
-        guest_token = get_guest_token(request)
-        prefs = [w for w in self.TAG_KEYWORDS if w in msg]
-        items = content_based_from_tags(prefs, n=5) if prefs else blended_recommendations(
-            request.user if request.user.is_authenticated else None, guest_token, n=5)
+        msg = (request.data.get("message") or "").strip()
+        intents, prefs = parse_message(msg)
+
+        # discovery/refine
+        items = search_candidates(prefs)
+        items = rank(items, prefs) or blended_recommendations(n=8)
         data = MenuItemSerializer(items, many=True).data
-        return Response({
-            'detected_prefs': prefs,
-            'suggestions': data,
-            'hint': "Reply with 'add #ID qty 2' to add, or say more preferences (e.g., 'vegan spicy')."
-        })
+
+        follow_up = "Want to add one to your cart or refine (e.g., less spicy, under $12)?"
+        return Response({"detected_prefs": prefs, "suggestions": data, "follow_up": follow_up})

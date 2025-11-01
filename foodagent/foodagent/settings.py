@@ -11,7 +11,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
+from dotenv import load_dotenv
+load_dotenv()
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -68,7 +70,13 @@ TEMPLATES = [
         },
     },
 ]
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
 
+# Where Stripe redirects after payment
+SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000")
+STRIPE_SUCCESS_URL = f"{SITE_URL}/checkout/success/"
+STRIPE_CANCEL_URL  = f"{SITE_URL}/checkout/cancel/"
 WSGI_APPLICATION = 'foodagent.wsgi.application'
 TEMPLATES[0]['DIRS'] = [BASE_DIR / 'templates'] 
 
