@@ -63,3 +63,27 @@ class EventLog(models.Model):
     menu_item = models.ForeignKey(MenuItem, on_delete=models.SET_NULL, null=True)
     event_type = models.CharField(max_length=16, choices=EVENT)
     ts = models.DateTimeField(auto_now_add=True)
+
+from django.db import models
+from django.contrib.auth.models import User
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    # Assuming you already have Tag(kind= 'diet' / 'allergen' / 'feature')
+    diets = models.ManyToManyField("Tag", blank=True, related_name="preferred_by", limit_choices_to={"kind":"diet"})
+    allergens = models.ManyToManyField("Tag", blank=True, related_name="avoided_by", limit_choices_to={"kind__in":["allergen","feature"]})
+
+class AgentSession(models.Model):
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    guest_token = models.CharField(max_length=64, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class AgentMessage(models.Model):
+    ROLE_CHOICES = (("user","user"),("assistant","assistant"),("tool","tool"))
+    session = models.ForeignKey(AgentSession, on_delete=models.CASCADE)
+    role = models.CharField(max_length=16, choices=ROLE_CHOICES)
+    content = models.TextField(blank=True, default="")
+    tool_name = models.CharField(max_length=64, blank=True, default="")
+    payload = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)

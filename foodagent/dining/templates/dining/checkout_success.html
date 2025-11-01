@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Payment successful • Crave</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .burst { position: absolute; inset: 0; pointer-events:none; }
+    .dot { position:absolute; width:8px; height:8px; border-radius:9999px; background:#F59E0B; animation: pop 900ms ease-out forwards; }
+    @keyframes pop { from { transform: translate(var(--x), var(--y)) scale(.2); opacity:.9 } to { transform: translate(calc(var(--x)*2), calc(var(--y)*2)) scale(1); opacity:0 } }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-amber-50 to-white text-gray-900">
+  <div class="min-h-[80vh] flex items-center justify-center relative">
+    <div class="burst">
+      <!-- cute confetti -->
+      <div class="dot" style="--x:-40px;--y:-10px; background:#10B981;"></div>
+      <div class="dot" style="--x:30px;--y:-20px; background:#3B82F6; animation-delay:.1s;"></div>
+      <div class="dot" style="--x:-10px;--y:30px; background:#EF4444; animation-delay:.2s;"></div>
+      <div class="dot" style="--x:50px;--y:20px; background:#8B5CF6; animation-delay:.25s;"></div>
+      <div class="dot" style="--x:-30px;--y:40px; background:#F59E0B; animation-delay:.3s;"></div>
+    </div>
+
+    <div class="bg-white/80 backdrop-blur rounded-3xl shadow-xl border max-w-lg w-full p-8 text-center">
+      <div class="text-6xl mb-3">✅</div>
+      <h1 class="text-2xl font-extrabold">Payment complete</h1>
+      {% if order %}
+        <p class="text-gray-600 mt-2">Thanks! Your order <span class="font-semibold">#{{ order.id }}</span> is being prepared.</p>
+      {% elif session_id %}
+        <p class="text-gray-600 mt-2">Thanks! We’ve received your payment (<span class="font-mono">{{ session_id|slice:":8" }}…</span>).</p>
+      {% else %}
+        <p class="text-gray-600 mt-2">Thanks! Your order is being prepared.</p>
+      {% endif %}
+
+      <div class="mt-6 grid gap-3 sm:grid-cols-2">
+        <a href="/" class="px-4 py-2 rounded-xl bg-black text-white">Back to home</a>
+        <a href="/cart/" class="px-4 py-2 rounded-xl border">Order more</a>
+      </div>
+      <p class="text-xs text-gray-500 mt-4">A receipt has been sent to your email (if provided).</p>
+    </div>
+  </div>
+</body>
+</html>

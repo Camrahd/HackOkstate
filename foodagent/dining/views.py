@@ -9,6 +9,8 @@ from .serializers import MenuItemSerializer, CartSerializer, CartItemCreateSeria
 from .recommender import blended_recommendations, content_based_from_tags
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
+
 
 def get_guest_token(request):
     tok = request.COOKIES.get('guest_token','')
@@ -16,7 +18,7 @@ def get_guest_token(request):
         import secrets
         tok = secrets.token_hex(16)
     return tok
-
+@ensure_csrf_cookie
 def landing(request):
     return render(request, 'landing.html')
 
@@ -74,3 +76,56 @@ class AgentAPI(APIView):
 
         follow_up = "Want to add one to your cart or refine (e.g., less spicy, under $12)?"
         return Response({"detected_prefs": prefs, "suggestions": data, "follow_up": follow_up})
+    
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from .agent_runner import run_order_agent
+
+
+def add_items(cart, items, default_qty=1):
+    added = []
+    for x in items:
+        ci, created = CartItem.objects.get_or_create(cart=cart, menu_item=x, defaults={"qty": default_qty})
+        if not created:
+            ci.qty += default_qty
+            ci.save()
+        added.append(x)
+    return added
+
+from .checkout import create_checkout_session_for_cart
+from django.urls import reverse
+from urllib.parse import urlencode
+
+@method_decorator(csrf_exempt, name="dispatch")  # keep for dev; remove in prod when CSRF wired
+class AgentOrderAPI(APIView):
+    def post(self, request):
+        msg = (request.data.get("message") or "").strip()
+        if not msg:
+            return Response({"error":"message required"}, status=400)
+
+        # Your agent decides items AND/OR we fallback to recommender inside run_order_agent
+        out = run_order_agent(request, msg)  # should add items to cart internally or return which to add
+
+        # If not logged in: DO NOT create Stripe session; guide to login
+        if not request.user.is_authenticated:
+            login_url  = reverse("account_login") + "?" + urlencode({"next": "/cart/"})
+            google_url = "/accounts/google/login/?" + urlencode({"process": "login", "next": "/cart/"})
+            out.update({
+                "follow_up": out.get("follow_up") or "I added items to your cart. Please sign in to continue to payment.",
+                "require_login": True,
+                "login_url": login_url,
+                "google_login_url": google_url,
+            })
+            return Response(out, status=401)
+
+        # Logged in: prepare checkout now
+        try:
+            checkout_url, sid = create_checkout_session_for_cart(request, fulfillment="pickup")
+            out.update({"checkout_url": checkout_url, "session_id": sid})
+        except Exception as e:
+            # Don’t break the chat; cart is updated already, user can pay from cart
+            out.update({"error": str(e)})
+
+        return Response(out)

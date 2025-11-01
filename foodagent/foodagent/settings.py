@@ -39,6 +39,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Allauth
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    # Your apps
     'rest_framework',
     'dining',
 ]
@@ -51,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'foodagent.urls'
@@ -79,6 +86,10 @@ STRIPE_SUCCESS_URL = f"{SITE_URL}/checkout/success/"
 STRIPE_CANCEL_URL  = f"{SITE_URL}/checkout/cancel/"
 WSGI_APPLICATION = 'foodagent.wsgi.application'
 TEMPLATES[0]['DIRS'] = [BASE_DIR / 'templates'] 
+# IMPORTANT: allauth needs this context processor
+TEMPLATES[0]["OPTIONS"]["context_processors"].append(
+    "django.template.context_processors.request"
+)
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -108,7 +119,19 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+SITE_ID = 1
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
 
+# Allauth minimal config
+ACCOUNT_EMAIL_VERIFICATION = "none"
+# NEW (current allauth config)
+ACCOUNT_LOGIN_METHODS = {'email', 'username'}  # or just {'email'} if username not needed
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/

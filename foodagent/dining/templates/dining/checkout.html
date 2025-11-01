@@ -115,8 +115,15 @@
           </div>
 
           <div class="mt-4">
-            <button id="pay" class="w-full px-4 py-3 rounded-2xl bg-black text-white">Pay with Apple&nbsp;Pay / Card</button>
-            <p class="text-xs text-gray-500 mt-2">Apple Pay appears in Stripe Checkout on eligible devices. Cards are always supported.</p>
+            {% if user.is_authenticated %}
+            <button id="pay" class="w-full px-4 py-3 rounded-2xl bg-black text-white">Pay now</button>
+          {% else %}
+            <div class="text-sm text-gray-600 mb-2">Please sign in to checkout.</div>
+            <a href="/accounts/google/login/?process=login&next=/cart/"
+               class="w-full inline-flex justify-center px-4 py-3 rounded-2xl border">Continue with Google</a>
+            <a href="/accounts/login/?next=/cart/"
+               class="mt-2 w-full inline-flex justify-center px-4 py-3 rounded-2xl bg-black text-white">Email login</a>
+          {% endif %}
           </div>
 
           <details class="mt-4">
@@ -233,6 +240,7 @@
         const r = await fetch('/api/create-checkout-session/', {
           method:'POST',
           headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},
+          credentials: 'same-origin',
           body: JSON.stringify(payload)
         });
         if(!r.ok){ msg.textContent = 'Could not start checkout.'; return; }

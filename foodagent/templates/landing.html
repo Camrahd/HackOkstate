@@ -1,14 +1,16 @@
+{% load static %}
+{% load socialaccount %}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Crave • Smart Dining & Food Ordering</title>
+  <title>OSU Dining • Stillwater Campus — Manual & Agent Ordering</title>
   <meta name="description" content="Tell us what you're craving. Get AI-powered recommendations and order in seconds from top restaurants near you." />
 
   <!-- Open Graph / Twitter -->
-  <meta property="og:title" content="Crave – Smart Dining & Food Ordering" />
-  <meta property="og:description" content="AI-powered picks. Beautiful menu. Fast checkout." />
+  <meta property="og:title" content="OSU Dining – Stillwater Campus" />
+  <meta property="og:description" content="Order your way: browse menus manually or let the Agent add items to your cart automatically." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=1200&q=80&auto=format&fit=crop" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -22,31 +24,46 @@
     .glass { backdrop-filter: blur(10px); background: rgba(255,255,255,0.7); }
     .card { transition: transform .15s ease, box-shadow .15s ease; }
     .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+    .btn-google svg{margin-right:.5rem}
   </style>
 </head>
 <body class="bg-gradient-to-b from-amber-50 to-white text-gray-900">
   <!-- NAVBAR -->
-  <header class="sticky top-0 z-40 bg-white/70 backdrop-blur border-b border-amber-100">
+  <header class="sticky top-0 z-40 bg-white/70 backdrop-blur border-b border-orange-100">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
       <a href="/" class="flex items-center gap-2 font-bold text-xl">
-        <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-white">🍽️</span>
-        Crave
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-orange-500 text-white">🍽️</span>
+        OSU Dining
       </a>
       <nav class="hidden md:flex items-center gap-6 text-sm">
-        <a href="#how" class="hover:text-amber-700">How it works</a>
-        <a href="#picks" class="hover:text-amber-700">Top picks</a>
-        <a href="#faq" class="hover:text-amber-700">FAQ</a>
+        <a href="#how" class="hover:text-orange-700">How it works</a>
+        <a href="#picks" class="hover:text-orange-700">Top picks</a>
+        <a href="#faq" class="hover:text-orange-700">FAQ</a>
       </nav>
       <div class="flex items-center gap-2">
-        <a href="#" class="text-sm hover:text-amber-700">Sign in</a>
+        {% if user.is_authenticated %}
+          <div class="hidden sm:flex items-center gap-2 mr-1 text-sm text-gray-700">
+            <div class="w-8 h-8 rounded-full bg-orange-600 text-white grid place-items-center font-semibold">
+              {{ user.first_name|default:user.username|slice:":1"|upper }}
+            </div>
+            <span class="max-w-[120px] truncate">Hi, {{ user.first_name|default:user.username }}</span>
+          </div>
+          <a href="/accounts/logout/" class="text-sm hover:text-orange-700">Sign out</a>
+        {% else %}
+          <a href="{% provider_login_url 'google' %}" class="btn-google text-sm px-3 py-2 rounded-xl border flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="18" height="18"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12 c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.24,6.053,28.824,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657 C33.24,6.053,28.824,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.197l-6.191-5.238C29.211,35.091,26.715,36,24,36 c-5.202,0-9.619-3.317-11.282-7.946l-6.493,5.006C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-3.994,5.565c0.001-0.001,0.002-0.001,0.003-0.002 l6.191,5.238C36.94,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+            <span>Sign in with Google</span>
+          </a>
+          <a href="/accounts/login/" class="text-sm hover:text-orange-700">Email login</a>
+        {% endif %}
 
         <!-- Cart button in top-right -->
         <a href="/cart/" class="relative text-sm px-3 py-2 rounded-xl bg-black text-white hover:opacity-90 flex items-center gap-2">
-          🛒 <span id="cart-count" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 text-xs">0</span>
+          🛒 <span id="cart-count" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-500 text-xs">0</span>
           <span class="hidden sm:inline">Cart</span>
         </a>
 
-        <a href="#picks" class="text-sm px-3 py-2 rounded-xl bg-amber-600 text-white hover:bg-amber-700">Browse menu</a>
+        <a href="#picks" class="text-sm px-3 py-2 rounded-xl bg-orange-600 text-white hover:bg-orange-700">Browse menu</a>
       </div>
     </div>
   </header>
@@ -63,9 +80,7 @@
         <div class="grid md:grid-cols-2 gap-8 items-center">
           <!-- LEFT -->
           <div>
-            <h1 class="text-3xl md:text-5xl font-extrabold leading-tight">
-              Crave it. <span class="text-amber-600">We recommend it.</span> Order instantly.
-            </h1>
+            <h1 class="text-3xl md:text-5xl font-extrabold leading-tight">OSU Stillwater Dining. <span class="text-orange-600">Order your way.</span><br class="hidden md:block"/> Manual or Agent—your choice.</h1>
             <p class="mt-3 text-gray-700 md:text-lg">
               Type your cravings or dietary needs. Our AI suggests dishes you'll love — from nearby kitchens — then you checkout in a tap.
             </p>
@@ -81,13 +96,23 @@
 
             <!-- Agent input -->
             <div class="mt-4 flex gap-2">
-              <input id="agent-input" class="flex-1 px-4 py-3 rounded-2xl border outline-none focus:ring-2 focus:ring-amber-500" placeholder="Try: ‘vegan spicy noodles’ or ‘high-protein bowls’"/>
-              <button id="agent-send" class="px-5 py-3 rounded-2xl bg-amber-600 text-white hover:bg-amber-700">Find my meal</button>
+              <input id="agent-input" class="flex-1 px-4 py-3 rounded-2xl border outline-none focus:ring-2 focus:ring-orange-500" placeholder="Try: ‘vegan spicy noodles’ or ‘high-protein bowls’"/>
+              <button id="agent-send" class="px-5 py-3 rounded-2xl bg-orange-600 text-white hover:bg-orange-700">Find my meal</button>
             </div>
+
+            {% if not user.is_authenticated %}
+            <div class="mt-4 flex items-center gap-3">
+              <a href="{% provider_login_url 'google' %}" class="btn-google inline-flex items-center px-4 py-2 rounded-xl border bg-white hover:bg-gray-50">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="18" height="18"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12 c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.24,6.053,28.824,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657 C33.24,6.053,28.824,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.197l-6.191-5.238C29.211,35.091,26.715,36,24,36 c-5.202,0-9.619-3.317-11.282-7.946l-6.493,5.006C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-3.994,5.565c0.001-0.001,0.002-0.001,0.003-0.002 l6.191,5.238C36.94,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+                Continue with Google
+              </a>
+              <a href="/accounts/signup/" class="text-sm underline">or create an account</a>
+            </div>
+            {% endif %}
 
             <!-- Social proof -->
             <div class="mt-4 text-sm text-gray-600 flex items-center gap-4">
-              <span>People's Most Trusted Site</span>
+              <span>OSU Dining Services — Stillwater</span>
               <span>•</span>
               <span>Secure checkout</span>
             </div>
@@ -134,7 +159,7 @@
   </section>
 
   <!-- HOW IT WORKS -->
-  <section id="how" class="py-12 bg-amber-50/60">
+  <section id="how" class="py-12 bg-orange-50/60">
     <div class="max-w-6xl mx-auto px-4">
       <h2 class="text-2xl md:text-3xl font-bold">How it works</h2>
       <div class="mt-6 grid md:grid-cols-3 gap-6">
@@ -183,15 +208,15 @@
     <div class="max-w-6xl mx-auto px-4">
       <h2 class="text-2xl md:text-3xl font-bold">Frequently asked</h2>
       <div class="mt-6 space-y-3" id="faq-list">
-        <details class="bg-amber-50/60 rounded-xl p-4 border">
+        <details class="bg-orange-50/60 rounded-xl p-4 border">
           <summary class="font-semibold cursor-pointer">How do recommendations work?</summary>
           <p class="mt-2 text-sm text-gray-700">We use your clicks and orders to learn preferences, then match menu tags (cuisine, diet, spice) and popularity. No spammy stuff.</p>
         </details>
-        <details class="bg-amber-50/60 rounded-xl p-4 border">
+        <details class="bg-orange-50/60 rounded-xl p-4 border">
           <summary class="font-semibold cursor-pointer">Can I filter by dietary needs?</summary>
           <p class="mt-2 text-sm text-gray-700">Yes — vegan, vegetarian, halal, gluten-free, low-carb, and more. Type them in or tap the chips.</p>
         </details>
-        <details class="bg-amber-50/60 rounded-xl p-4 border">
+        <details class="bg-orange-50/60 rounded-xl p-4 border">
           <summary class="font-semibold cursor-pointer">Is checkout secure?</summary>
           <p class="mt-2 text-sm text-gray-700">Payments are processed via industry-standard providers using HTTPS and PCI-compliant flows.</p>
         </details>
@@ -203,7 +228,7 @@
   <footer class="py-10 bg-gray-900 text-gray-300">
     <div class="max-w-6xl mx-auto px-4 grid md:grid-cols-4 gap-8">
       <div>
-        <div class="flex items-center gap-2 font-bold text-lg text-white"><span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500">🍽️</span>Crave</div>
+        <div class="flex items-center gap-2 font-bold text-lg text-white"><span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-orange-500">🍽️</span>OSU Dining</div>
         <p class="mt-2 text-sm">AI-powered dining. Discover dishes you’ll love.</p>
       </div>
       <div>
@@ -230,7 +255,7 @@
         </ul>
       </div>
     </div>
-    <div class="max-w-6xl mx-auto px-4 mt-8 text-xs text-gray-500">©️ <span id="yr"></span> Crave. All rights reserved.</div>
+    <div class="max-w-6xl mx-auto px-4 mt-8 text-xs text-gray-500">©️ <span id="yr"></span> OSU Dining. All rights reserved.</div>
   </footer>
 
   <!-- ===== Right-drawer Chat (closed by default) ===== -->
@@ -253,7 +278,7 @@
     <!-- Header -->
     <div class="h-14 px-4 border-b flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="font-bold text-lg">Crave Support</div>
+        <div class="font-bold text-lg">OSU Dining Assistant</div>
         <span class="inline-flex items-center gap-1 text-xs text-gray-500">
           <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span> online
         </span>
@@ -281,9 +306,9 @@
 
     <!-- Input bar -->
     <form id="chat-form" class="h-16 border-t bg-white px-3 flex items-center gap-2">
-      <input id="chat-input" class="flex-1 border rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500"
+      <input id="chat-input" class="flex-1 border rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500"
              placeholder="Type a message…" autocomplete="off" />
-      <button class="px-3 py-2 rounded-xl bg-amber-600 text-white">Send</button>
+      <button class="px-3 py-2 rounded-xl bg-orange-600 text-white">Send</button>
     </form>
   </aside>
   <!-- ===== /Right-drawer Chat ===== -->
@@ -293,7 +318,7 @@
   {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "Crave",
+    "name": "OSU Dining",
     "url": "https://example.com",
     "potentialAction": {"@type": "SearchAction", "target": "https://example.com/?q={search_term}", "query-input": "required name=search_term"}
   }
@@ -301,6 +326,11 @@
 
   <!-- Page scripts -->
   <script>
+    function getCookie(name){
+    return document.cookie.split('; ')
+      .find(r => r.startsWith(name + '='))?.split('=')[1];
+     }
+    const csrftoken = getCookie('csrftoken');
     const recsRoot = document.getElementById('recs');
     const agentResults = document.getElementById('agent-results');
     const cartCount = document.getElementById('cart-count');
@@ -343,14 +373,66 @@
         input.focus();
       });
     });
+    // document.getElementById('agent-send').onclick = async () => {
+    //   const msg = document.getElementById('agent-input').value.trim();
+    //   if(!msg) return;
+    //   const r = await fetch('/api/agent/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message: msg})});
+    //   const j = await r.json();
+    //   renderCards(agentResults, j.suggestions || []);
+    //   agentResults.scrollIntoView({behavior:'smooth', block:'start'});
+    // };
     document.getElementById('agent-send').onclick = async () => {
-      const msg = document.getElementById('agent-input').value.trim();
-      if(!msg) return;
-      const r = await fetch('/api/agent/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message: msg})});
-      const j = await r.json();
-      renderCards(agentResults, j.suggestions || []);
-      agentResults.scrollIntoView({behavior:'smooth', block:'start'});
-    };
+  const msg = document.getElementById('agent-input').value.trim();
+  if (!msg) return;
+
+  try {
+    // New agent endpoint that actually adds to cart
+    const r = await fetch('/api/agent/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken   // important after login (Session auth)
+      },
+      body: JSON.stringify({ message: msg })
+    });
+
+    // If the endpoint isn't found, you were still on /api/agent/. Switch URLs or add a compat route (see §3).
+    if (!r.ok) {
+      const t = await r.text();
+      console.error('Agent error:', t);
+      alert('Agent error: ' + t);
+      return;
+    }
+
+    const j = await r.json();
+
+    // 1) Show suggestions if backend returns them
+    if (j.suggestions && j.suggestions.length) {
+      renderCards(agentResults, j.suggestions);
+      agentResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      // 2) Fallback: show updated recommendations for the query
+      const rr = await fetch('/api/recommendations/?q=' + encodeURIComponent(msg));
+      const jj = await rr.json();
+      renderCards(agentResults, jj.results || []);
+      agentResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // 3) Update cart count & show the assistant follow-up text
+    if (typeof refreshCartCount === 'function') refreshCartCount();
+    if (j.follow_up) {
+      // If you have the chat drawer open, you can push a bot bubble there; otherwise use a toast:
+      // pushMsg('bot', j.follow_up); // if chat is open
+      toast(j.follow_up);
+    } else {
+      toast('Added to cart');
+    }
+
+  } catch (e) {
+    console.error(e);
+    alert('Network error.');
+  }
+};
 
     // Cart helpers
     async function refreshCartCount(){
@@ -361,13 +443,24 @@
         cartCount.textContent = n;
       } catch(e){ console.error(e); }
     }
+    // async function addToCart(id){
+    //   try{
+    //     await fetch('/api/cart/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({menu_item:id, qty:1})});
+    //     refreshCartCount();
+    //     toast('Added to cart');
+    //   } catch(e){ console.error(e); toast('Error adding to cart'); }
+    // }
     async function addToCart(id){
-      try{
-        await fetch('/api/cart/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({menu_item:id, qty:1})});
-        refreshCartCount();
-        toast('Added to cart');
-      } catch(e){ console.error(e); toast('Error adding to cart'); }
-    }
+  try{
+    await fetch('/api/cart/', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken': csrftoken},
+      body: JSON.stringify({menu_item:id, qty:1})
+    });
+    refreshCartCount();
+    toast('Added to cart');
+  } catch(e){ console.error(e); toast('Error adding to cart'); }
+}
     window.addToCart = addToCart;
 
     // Tiny toast
@@ -444,7 +537,7 @@
       wrap.className = 'p-3 ' + (role === 'user' ? 'text-right' : 'text-left');
       const bubble = document.createElement('div');
       bubble.className = 'inline-block max-w-[85%] px-3 py-2 rounded-2xl text-sm ' +
-        (role === 'user' ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-800');
+        (role === 'user' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-800');
       bubble.textContent = text;
       wrap.appendChild(bubble);
       chatBody.appendChild(wrap);
@@ -460,32 +553,54 @@
     });
 
     chatForm.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const msg = (chatInput.value || '').trim();
-      if(!msg) return;
-      pushMsg('user', msg);
-      chatInput.value = '';
+  e.preventDefault();
+  const msg = (chatInput.value || '').trim();
+  if(!msg) return;
+  pushMsg('user', msg);
+  chatInput.value = '';
 
-      try{
-        const r = await fetch('/api/agent/', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ message: msg })
-        });
-        const j = await r.json();
-        const suggestions = (j.suggestions || []).slice(0,3);
-        if (suggestions.length){
-          const text = 'You might like:\n' + suggestions
-            .map(x => `• ${x.name} ($${Number(x.price).toFixed(2)})`).join('\n');
-          pushMsg('bot', text);
-        } else {
-          pushMsg('bot', j.reply || "Got it! Tell me a flavor, diet, or cuisine and I’ll suggest dishes.");
-        }
-      } catch (err){
-        console.error(err);
-        pushMsg('bot', 'Sorry—something went wrong. Please try again.');
-      }
+  try{
+    const r = await fetch('/api/agent/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken': csrftoken},
+      body: JSON.stringify({ message: msg })
     });
+    const text = await r.text();
+    let j = {};
+    try { j = text ? JSON.parse(text) : {}; } catch { /* bad JSON -> show text */ }
+
+    if (!r.ok) {
+      console.error('Agent error:', r.status, text);
+      pushMsg('bot', 'Sorry—something went wrong.');
+      return;
+    }
+
+    // show suggestions summary
+    if (j.suggestions?.length){
+      const textList = j.suggestions.map(x => `• ${x.name} ($${Number(x.price).toFixed(2)})`).join('\n');
+      pushMsg('bot', `I picked these:\n${textList}`);
+    }
+    // show follow up
+    if (j.follow_up) pushMsg('bot', j.follow_up);
+
+    // pay link
+    if (j.checkout_url){
+      pushMsg('bot', 'Tap to confirm & pay:');
+      const wrap = document.createElement('div');
+      wrap.className = 'p-3 text-left';
+      wrap.innerHTML = `<a href="${j.checkout_url}" target="_blank"
+          class="inline-flex items-center px-4 py-2 rounded-xl bg-black text-white">
+          Confirm & Pay</a>`;
+      chatBody.appendChild(wrap);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+    if (typeof refreshCartCount === 'function') refreshCartCount();
+
+  } catch (err){
+    console.error(err);
+    pushMsg('bot', 'Network error. Please try again.');
+  }
+});
 
     // Init
     loadRecs();
