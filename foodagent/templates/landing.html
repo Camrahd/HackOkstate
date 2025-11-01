@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dining Services</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body class="bg-gray-50">
+  <header class="max-w-5xl mx-auto p-6">
+    <h1 class="text-3xl font-bold">Delicious, fast. ✨</h1>
+    <p class="text-gray-600">Tell the assistant what you crave, get smart picks, and order in seconds.</p>
+  </header>
+
+  <main class="max-w-5xl mx-auto p-6 grid gap-8">
+    <section id="hero" class="bg-white rounded-2xl shadow p-6">
+      <div class="flex flex-col md:flex-row items-center gap-6">
+        <div class="flex-1">
+          <h2 class="text-2xl font-semibold mb-2">What are you in the mood for?</h2>
+          <div class="flex gap-2">
+            <input id="agent-input" class="border rounded-xl px-4 py-2 w-full" placeholder="Try: vegan spicy noodles" />
+            <button id="agent-send" class="px-4 py-2 rounded-xl bg-black text-white">Ask</button>
+          </div>
+          <p class="text-sm text-gray-500 mt-2">The assistant understands cuisines, diets, and flavors.</p>
+        </div>
+        <img src="https://images.unsplash.com/photo-1604908554029-b7e1953b9b05?q=80&w=800&auto=format&fit=crop" alt="food" class="rounded-2xl w-64 h-40 object-cover" />
+      </div>
+      <div id="agent-results" class="mt-6 grid md:grid-cols-3 gap-4"></div>
+    </section>
+
+    <section class="bg-white rounded-2xl shadow p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Recommended for you</h2>
+        <button id="refresh-recs" class="text-sm underline">Refresh</button>
+      </div>
+      <div id="recs" class="grid md:grid-cols-3 gap-4"></div>
+    </section>
+  </main>
+
+  <script>
+    async function loadRecs() {
+      const r = await fetch('/api/recommendations/');
+      const j = await r.json();
+      renderCards(document.getElementById('recs'), j.results);
+    }
+    function renderCards(root, items) {
+      root.innerHTML = items.map(x => `
+        <div class="border rounded-2xl p-4 hover:shadow">
+          <div class="font-semibold">${x.name}</div>
+          <div class="text-sm text-gray-500">$${x.price}</div>
+          <p class="text-sm mt-1">${x.description ?? ''}</p>
+          <div class="flex flex-wrap gap-1 mt-2">
+            ${(x.tags||[]).map(t => `<span class="text-xs bg-gray-100 px-2 py-1 rounded-full">${t.name}</span>`).join('')}
+          </div>
+          <button class="mt-3 text-sm px-3 py-1 rounded-xl bg-black text-white" onclick="addToCart(${x.id})">Add to cart</button>
+        </div>
+      `).join('');
+    }
+    async function addToCart(id) {
+      await fetch('/api/cart/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({menu_item:id, qty:1})});
+      alert('Added to cart!');
+    }
+    document.getElementById('refresh-recs').onclick = loadRecs;
+
+    document.getElementById('agent-send').onclick = async () => {
+      const msg = document.getElementById('agent-input').value;
+      const r = await fetch('/api/agent/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message: msg})});
+      const j = await r.json();
+      renderCards(document.getElementById('agent-results'), j.suggestions);
+    };
+    loadRecs();
+  </script>
+</body>
+</html>
