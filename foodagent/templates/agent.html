@@ -6,7 +6,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>OSU Dining Agent • Stillwater</title>
-  <meta name="description" content="Chat with the OSU Dining Agent to get recommendations and place orders automatically."/>
+  <meta name="description" content="Chat with the OSU Dining Agent to get menu suggestions and add/order exact items by ID (voice or text)."/>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" href="{% static 'favicon.ico' %}"/>
   <style>
@@ -24,11 +24,8 @@
     .btn-dark{ background:#111827; color:white; }
     .btn-ghost{ background:white; border:1px solid #e5e7eb; }
     .hdr-grad { background: linear-gradient(135deg, #111827 0%, #1f2937 45%, var(--osu-orange) 120%); color:white; }
-    .shadow-elev { box-shadow: 0 15px 40px rgba(0,0,0,.08); }
-    .step-dot.active { background:#f59e0b }  /* amber */
-    .step-dot.done   { background:#16a34a }  /* green */
-    .step-dot.error  { background:#dc2626 }  /* red */
-    /* pretty toggle */
+
+    /* Web Search toggle */
     .switch { position: relative; width: 56px; height: 28px; background:#e5e7eb; border-radius:999px; transition:.2s; }
     .switch:after { content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; background:white; border-radius:999px; transition:.2s; box-shadow:0 2px 8px rgba(0,0,0,.15); }
     input:checked + .switch { background:#16a34a; }
@@ -40,22 +37,15 @@
   <header class="sticky top-0 z-40 bg-white/70 backdrop-blur border-b">
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
       <button type="button"
-          class="px-4 py-2 rounded-xl border hover:bg-gray-50"
-          onclick="if (document.referrer) { window.history.back(); } else { window.location.href = '/'; }">
-    ←
-  </button>
+              class="px-4 py-2 rounded-xl border hover:bg-gray-50"
+              onclick="if (document.referrer) { window.history.back(); } else { window.location.href = '/'; }">
+        ←
+      </button>
       <a href="/" class="flex items-center gap-2 font-bold text-xl">
         <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-orange-600 text-white">🍽️</span>
         OSU Dining Agent
       </a>
       <div class="flex items-center gap-4">
-        <!-- Web Search toggle (navigates to separate page) -->
-        <label class="flex items-center gap-2 text-sm">
-          <span>Web Search</span>
-          <input id="websearch-toggle" type="checkbox" class="hidden">
-          <span class="switch cursor-pointer"></span>
-        </label>
-
         <a href="/cart/" class="relative text-sm px-3 py-2 rounded-xl bg-black text-white hover:opacity-90 flex items-center gap-2">
           🛒 <span id="cart-count" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-600 text-xs">0</span>
           <span class="hidden sm:inline">Cart</span>
@@ -68,7 +58,7 @@
   <!-- Agent Shell -->
   <main class="max-w-5xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
     <!-- Chat -->
-    <section class="lg:col-span-2 bg-white rounded-2xl border shadow-elev overflow-hidden">
+    <section class="lg:col-span-2 bg-white rounded-2xl border overflow-hidden">
       <div class="hdr-grad h-14 px-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="font-bold">Dining Assistant</div>
@@ -76,38 +66,45 @@
             <span class="inline-block w-2 h-2 rounded-full bg-green-400"></span> online
           </span>
         </div>
-        <div class="flex items-center gap-3">
-          <div class="text-xs inline-flex items-center gap-1">
-            <input type="checkbox" id="auto-order"> <label for="auto-order">Auto-order</label>
-          </div>
-          <div class="text-xs inline-flex items-center gap-1">
-            <input type="checkbox" id="speak-replies"> <label for="speak-replies">🔊 Speak</label>
-          </div>
-        </div>
+        <!-- Web Search toggle moved here (rightmost) -->
+        <label class="flex items-center gap-2 text-xs sm:text-sm">
+          <span class="opacity-90">Web Search</span>
+          <input id="websearch-toggle" type="checkbox" class="hidden">
+          <span class="switch cursor-pointer"></span>
+        </label>
       </div>
 
       <!-- Chat body -->
       <div id="chat-body" class="h-[58vh] md:h-[62vh] overflow-y-auto p-3">
         <div class="p-1">
           <div class="bubble bubble-bot inline-block">
-            Hi! Tell me what you’re craving (e.g., “spicy vegan”, “under $12 bowls”). Say “order” to add.
+            Tell me what you’re craving (e.g., “spicy vegan”, “under $12 bowls”).<br/>
+            Add specific items by ID: <strong>“add 23”</strong> or multiple: <strong>“add 12 and 34”</strong>.<br/>
+            Buy by ID: <strong>“order 23”</strong>. Buy your cart: <strong>“order items in the cart”</strong>.
           </div>
         </div>
         <div class="px-1 pb-2">
           <div class="flex flex-wrap gap-2">
             <button data-q="Recommend spicy vegan dishes" class="qchip px-3 py-1 rounded-full bg-white border text-sm">Spicy vegan dishes</button>
-            <button data-q="Under $12 lunch bowls" class="qchip px-3 py-1 rounded-full bg-white border text-sm">Under $12 bowls</button>
+            <button data-q="Under $12 lunch bowls" class="qchip px-3 py-1 rounded-full bg-white border text-sm">Under $12 lunch bowls</button>
             <button data-q="High-protein options" class="qchip px-3 py-1 rounded-full bg-white border text-sm">High-protein</button>
             <button data-q="Gluten-free pizza" class="qchip px-3 py-1 rounded-full bg-white border text-sm">Gluten-free pizza</button>
           </div>
         </div>
       </div>
 
-      <!-- Composer -->
-      <div class="h-22 border-t bg-white px-3 py-2 flex items-center gap-2">
-        <button type="button" id="mic-btn" class="px-3 py-2 rounded-xl border" title="Voice input">🎙️</button>
-        <input id="chat-input" class="flex-1 border rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500" placeholder="Type or use the mic…" autocomplete="off"/>
-        <button id="chat-send" class="btn btn-dark">Send</button>
+      <!-- Composer with mic INSIDE the textbox -->
+      <div class="h-22 border-t bg-white px-3 py-2">
+        <div class="relative">
+          <input id="chat-input"
+                 class="w-full border rounded-xl pl-3 pr-12 py-2 outline-none focus:ring-2 focus:ring-orange-500"
+                 placeholder="Type or use the mic…"
+                 autocomplete="off"/>
+          <!-- Mic button inside input -->
+          <button type="button" id="mic-btn"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg border text-sm"
+                  title="Voice input">🎙️</button>
+        </div>
       </div>
     </section>
 
@@ -125,9 +122,9 @@
       <div class="bg-white rounded-2xl border p-4">
         <div class="font-semibold">Tips</div>
         <ul class="list-disc pl-5 text-sm text-gray-700 mt-2 space-y-1">
-          <li>Say “order” to automatically add the top result and start checkout.</li>
-          <li>Use price or diet filters: “under $12”, “halal”, “vegan high protein”.</li>
-          <li>Want places nearby? Toggle <strong>Web Search</strong> above.</li>
+          <li>Suggestions show <strong>ID</strong>. Say “add &lt;ID&gt;” to add by voice.</li>
+          <li>Buy instantly: “order &lt;ID&gt;” or “order 12 and 37”.</li>
+          <li>Buy your cart: “order items in the cart” or “checkout”.</li>
         </ul>
       </div>
     </aside>
@@ -138,14 +135,14 @@
     <div class="absolute inset-0 bg-black/40"></div>
     <div class="relative max-w-md mx-auto mt-24 bg-white rounded-2xl shadow-2xl border">
       <div class="p-4 border-b flex items-center justify-between">
-        <div class="font-semibold">Placing your order…</div>
+        <div class="font-semibold">Processing your order…</div>
         <button id="flow-close" class="text-gray-500 hover:text-black">✕</button>
       </div>
       <div class="p-4">
         <ol class="space-y-3 text-sm">
           <li id="flow-step-add" class="flex items-center gap-2">
             <span class="step-dot w-2 h-2 rounded-full bg-gray-300"></span>
-            Adding items to cart
+            Adding item(s) to cart
           </li>
           <li id="flow-step-pay" class="flex items-center gap-2">
             <span class="step-dot w-2 h-2 rounded-full bg-gray-300"></span>
@@ -181,11 +178,9 @@
     const mini = document.getElementById('mini');
     const chatBody = document.getElementById('chat-body');
 
-    // Toggle navigates to dedicated websearch page
+    // Web Search page toggle (in header)
     const webToggle = document.getElementById('websearch-toggle');
-    webToggle.addEventListener('change', ()=> {
-      if (webToggle.checked) window.location.href = "/websearch/";
-    });
+    webToggle.addEventListener('change', ()=> { if (webToggle.checked) window.location.href = "/websearch/"; });
 
     function pushMsg(role, text){
       const wrap = document.createElement('div');
@@ -196,7 +191,6 @@
       wrap.appendChild(bubble);
       chatBody.appendChild(wrap);
       chatBody.scrollTop = chatBody.scrollHeight;
-      if (role === 'bot') speak(text);
     }
     function showTyping(){
       const el = document.createElement('div'); el.id='typing'; el.className='p-2';
@@ -205,23 +199,27 @@
     }
     function hideTyping(){ document.getElementById('typing')?.remove(); }
 
-    // ---- Voice In / TTS ----
-    const speakEl = document.getElementById('speak-replies');
-    function speak(text){ try{ if(!speakEl.checked) return; const u=new SpeechSynthesisUtterance(text); speechSynthesis.cancel(); speechSynthesis.speak(u);}catch{} }
+    // ---- Voice In (mic inside textbox) ----
     const micBtn = document.getElementById('mic-btn');
-    let rec = null, listening=false;
+    let rec = null, listening=false, voiceHandled=false;
     function initRec(){
       const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!Ctor) return null;
       const r=new Ctor(); r.lang='en-US'; r.continuous=false; r.interimResults=false;
-      r.onresult = (ev)=>{ const t=ev.results?.[0]?.[0]?.transcript; if(t){ document.getElementById('chat-input').value=t; document.getElementById('chat-send').click(); }};
-      r.onend = ()=>{ listening=false; micBtn.textContent='🎙️'; };
+      r.onresult = (ev)=>{
+        if (voiceHandled) return;
+        voiceHandled = true; // avoid duplicate
+        const t=ev.results?.[0]?.[0]?.transcript;
+        if(t){ document.getElementById('chat-input').value=t; handleSend(); }
+        r.stop();
+      };
+      r.onend = ()=>{ listening=false; voiceHandled=false; };
       return r;
     }
     micBtn.addEventListener('click', ()=>{
       if(!rec) rec=initRec();
       if(!rec){ alert('Voice input not supported by this browser.'); return; }
-      if(!listening){ listening=true; micBtn.textContent='⏹️'; rec.start(); } else { rec.stop(); }
+      if(!listening){ listening=true; rec.start(); } else { rec.stop(); }
     });
 
     // ---- Cart helpers ----
@@ -233,7 +231,7 @@
         cartCount.textContent = n;
         if (!j.items?.length){ mini.textContent = 'Items will appear as you add them.'; return; }
         mini.innerHTML = j.items.map(it => `<div class="flex items-center justify-between">
-            <span>${it.menu_item.name} × ${it.qty}</span>
+            <span>#${it.menu_item.id} — ${it.menu_item.name} × ${it.qty}</span>
             <span class="text-gray-600">$${Number(it.menu_item.price).toFixed(2)}</span>
           </div>`).join('');
       }catch(e){ console.error(e); }
@@ -268,10 +266,88 @@
     function showFlowError(msg){ if(flowErr){ flowErr.textContent=msg; flowErr.classList.remove('hidden'); } }
     function requireLoginInFlow(){ stepState(stepPay,'error'); flowLogin?.classList.remove('hidden'); }
 
-    // ---- Chat ordering (Menu-only) ----
-    const autoOrderEl = document.getElementById('auto-order');
-    function wantsOrder(text){ return /\b(order now|place order|checkout|confirm order|confirm|order)\b/i.test(text.trim()); }
+    // ---- Suggestions UI (shows ID) ----
+    function renderSuggestionList(items){
+      if(!items?.length) return;
+      const wrap = document.createElement('div'); wrap.className='p-2 text-left';
+      const grid = document.createElement('div'); grid.className='grid gap-2';
+      items.forEach(x=>{
+        const el = document.createElement('div');
+        el.className = 'item-pill flex items-center justify-between';
+        el.innerHTML = `
+          <div>
+            <div class="font-semibold">#${x.id} — ${x.name}</div>
+            <div class="text-xs text-gray-500">$${Number(x.price).toFixed(2)}</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn btn-ghost text-xs" data-view="${x.id}">Details</button>
+            <button class="btn btn-dark text-xs" data-add="${x.id}">Add</button>
+          </div>`;
+        grid.appendChild(el);
+      });
+      wrap.appendChild(grid);
+      chatBody.appendChild(wrap);
+      chatBody.scrollTop = chatBody.scrollHeight;
 
+      wrap.querySelectorAll('[data-add]').forEach(b=>{
+        b.addEventListener('click', async ()=>{
+          if(b.disabled) return; b.disabled=true;
+          try{
+            const id = Number(b.getAttribute('data-add'));
+            await addItemToCart(id);
+            pushMsg('bot',`Added #${id} to cart.`);
+            refreshCart();
+          } finally { setTimeout(()=>b.disabled=false,600); }
+        });
+      });
+    }
+
+    // ---- Add-to-cart helpers ----
+    async function addItemToCart(id, qty=1){
+      const r = await fetch('/api/cart/', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRFToken': csrftoken},
+        credentials:'same-origin',
+        body: JSON.stringify({menu_item:id, qty:qty})
+      });
+      if (r.status === 401){ requireLoginInFlow(); throw new Error('login'); }
+      if (!r.ok) throw new Error('add-failed');
+      return r.json().catch(()=> ({}));
+    }
+    async function addItemsToCart(ids){
+      const added=[]; for(const id of ids){ try{ await addItemToCart(id); added.push(id);}catch(e){} }
+      return added;
+    }
+
+    // ---- Checkout helper ----
+    async function startCheckout(){
+      stepState(stepPay,'active');
+      const r = await fetch('/api/create-checkout-session/', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},
+        credentials:'same-origin',
+        body: JSON.stringify({})
+      });
+      const txt = await r.text(); let j={}; try{ j = txt ? JSON.parse(txt) : {}; }catch{}
+      if(r.status===401){ requireLoginInFlow(); pushMsg('bot','Please sign in to proceed to payment.'); return; }
+      if(!r.ok || !j.checkout_url){ stepState(stepPay,'error'); showFlowError(j.error || 'Could not create payment session.'); pushMsg('bot','Payment couldn’t be started.'); return; }
+      stepState(stepPay,'done'); stepState(stepGo,'active');
+      window.location.href = j.checkout_url;
+    }
+
+    // Command parsing
+    const ORDER_CART_RX = /(order|checkout).*(cart|items)/i;
+    const ORDER_IDS_RX  = /\border\b/i;     // requires ids
+    const ADD_IDS_RX    = /\b(add|buy|get)\b/i;
+
+    const PRICE_PHRASE_RX = /(under|below|less\s*than|<=?)\s*\$?\s*\d+(?:\.\d{1,2})?/ig;
+    function parseIds(text){
+      // strip price phrases so numbers like "under $12" don't look like IDs
+      const s = String(text||'').replace(PRICE_PHRASE_RX,'');
+      return [...s.matchAll(/#?\b(\d{1,6})\b/g)].map(m=>Number(m[1])).filter(Boolean);
+    }
+
+    // ---- Chat send logic ----
     let inFlight = false;
     async function handleSend(){
       if(inFlight) return;
@@ -281,91 +357,62 @@
       pushMsg('user', msg);
       input.value='';
 
-      const orderingFlow = autoOrderEl.checked || wantsOrder(msg);
-      const url = orderingFlow ? '/api/agent/order/' : '/api/agent/';
+      // 1) Order existing cart
+      if (ORDER_CART_RX.test(msg) || /^checkout$/i.test(msg)){
+        showTyping(); inFlight = true;
+        try{
+          flowOpen(); stepState(stepAdd,'done'); // nothing to add
+          await startCheckout();
+        } finally { hideTyping(); setTimeout(()=>{ inFlight=false; }, 300); }
+        return;
+      }
 
+      // 2) Order by ID(s): add then checkout
+      if (ORDER_IDS_RX.test(msg)){
+        const ids = parseIds(msg);
+        if (ids.length){
+          showTyping(); inFlight = true;
+          try{
+            flowOpen(); stepState(stepAdd,'active');
+            const added = await addItemsToCart(ids);
+            if (added.length){
+              stepState(stepAdd,'done');
+              flowItems.innerHTML = added.map(i=>`<li>• Item #${i} added</li>`).join('');
+              pushMsg('bot', `Added ${added.map(i=>`#${i}`).join(', ')}. Proceeding to checkout…`);
+              await startCheckout();
+              return;
+            } else {
+              stepState(stepAdd,'error'); showFlowError('Could not add the requested item(s).');
+              pushMsg('bot','Could not add the requested item(s).');
+            }
+          } finally { hideTyping(); setTimeout(()=>{ inFlight=false; }, 400); }
+          return;
+        }
+      }
+
+      // 3) Add by ID(s): add only
+      if (ADD_IDS_RX.test(msg)){
+        const ids = parseIds(msg);
+        if (ids.length){
+          showTyping(); inFlight = true;
+          try{
+            const added = await addItemsToCart(ids);
+            hideTyping();
+            if (added.length){
+              pushMsg('bot', `Added ${added.map(i=>`#${i}`).join(', ')} to cart.`);
+              refreshCart();
+            } else {
+              pushMsg('bot','Could not add the requested item(s). Check IDs and try again.');
+            }
+          } finally { setTimeout(()=>{ inFlight=false; }, 300); }
+          return;
+        }
+      }
+
+      // 4) Otherwise: suggestions
       showTyping(); inFlight = true;
       try{
-        if(orderingFlow){
-          flowOpen();
-          stepState(stepAdd,'active');
-
-          // Add items
-          const addResp = await fetch(url, {
-            method:'POST',
-            headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},
-            credentials:'same-origin',
-            body: JSON.stringify({message: msg})
-          });
-          const addTxt = await addResp.text(); let add = {}; try{ add = addTxt ? JSON.parse(addTxt) : {}; }catch{}
-          hideTyping();
-
-          if(addResp.status === 401 || add.require_login){
-            stepState(stepAdd,'done'); requireLoginInFlow();
-            pushMsg('bot','Please sign in to continue to payment.');
-            refreshCart(); return;
-          }
-          if(!addResp.ok){
-            stepState(stepAdd,'error'); showFlowError('Could not add items. Please try again.');
-            pushMsg('bot','Sorry—something went wrong adding items.');
-            return;
-          }
-          stepState(stepAdd,'done');
-
-          if (add.added?.length){
-            flowItems.innerHTML = add.added.map(x => `<li>• ${x.name}</li>`).join('');
-            const s = add.added.map(x=>`• ${x.name}`).join('\n');
-            pushMsg('bot', `Added to cart:\n${s}`);
-          }
-          if (add.suggestions?.length){
-            pushMsg('bot','You might also like (not added):');
-            const wrap = document.createElement('div'); wrap.className='p-2 text-left';
-            const grid = document.createElement('div'); grid.className='grid gap-2';
-            add.suggestions.forEach(x=>{
-              const el = document.createElement('div');
-              el.className = 'item-pill flex items-center justify-between';
-              el.innerHTML = `
-                <div>
-                  <div class="font-semibold">${x.name}</div>
-                  <div class="text-xs text-gray-500">$${Number(x.price).toFixed(2)}</div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button class="btn btn-ghost text-xs" data-view="${x.id}">Details</button>
-                  <button class="btn btn-dark text-xs" data-add="${x.id}">Add</button>
-                </div>`;
-              grid.appendChild(el);
-            });
-            wrap.appendChild(grid); chatBody.appendChild(wrap);
-          }
-          refreshCart();
-
-          if(add.checkout_url){
-            stepState(stepPay,'done'); stepState(stepGo,'active');
-            window.location.href = add.checkout_url; return;
-          }
-
-          // Create checkout session
-          stepState(stepPay,'active');
-          const payResp = await fetch('/api/create-checkout-session/', {
-            method:'POST',
-            headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},
-            credentials:'same-origin',
-            body: JSON.stringify({})
-          });
-          const payTxt = await payResp.text(); let pay={}; try{ pay = payTxt ? JSON.parse(payTxt) : {}; }catch{}
-          if(payResp.status===401){
-            requireLoginInFlow(); pushMsg('bot','Please sign in to proceed to payment.'); refreshCart(); return;
-          }
-          if(!payResp.ok || !pay.checkout_url){
-            stepState(stepPay,'error'); showFlowError(pay.error || 'Could not create payment session.');
-            pushMsg('bot','Payment couldn’t be started. Try again.'); return;
-          }
-          stepState(stepPay,'done'); stepState(stepGo,'active');
-          window.location.href = pay.checkout_url; return;
-        }
-
-        // Suggestions only
-        const r = await fetch(url, {
+        const r = await fetch('/api/agent/', {
           method:'POST',
           headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},
           credentials:'same-origin',
@@ -376,39 +423,8 @@
 
         if(!r.ok){ pushMsg('bot','Sorry—something went wrong.'); return; }
         if(j.suggestions?.length){
-          const wrap = document.createElement('div'); wrap.className='p-2 text-left';
-          const grid = document.createElement('div'); grid.className='grid gap-2';
-          j.suggestions.forEach(x=>{
-            const el = document.createElement('div');
-            el.className = 'item-pill flex items-center justify-between';
-            el.innerHTML = `
-              <div>
-                <div class="font-semibold">${x.name}</div>
-                <div class="text-xs text-gray-500">$${Number(x.price).toFixed(2)}</div>
-              </div>
-              <div class="flex items-center gap-2">
-                <button class="btn btn-ghost text-xs" data-view="${x.id}">Details</button>
-                <button class="btn btn-dark text-xs" data-add="${x.id}">Add</button>
-              </div>`;
-            grid.appendChild(el);
-          });
-          wrap.appendChild(grid);
-          chatBody.appendChild(wrap);
-          chatBody.scrollTop = chatBody.scrollHeight;
-
-          wrap.querySelectorAll('[data-add]').forEach(b=>{
-            b.addEventListener('click', async ()=>{
-              if(b.disabled) return; b.disabled=true;
-              try{
-                const id = Number(b.getAttribute('data-add'));
-                await fetch('/api/cart/', {
-                  method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken': csrftoken},
-                  credentials:'same-origin', body: JSON.stringify({menu_item:id, qty:1})
-                });
-                pushMsg('bot','Added to cart.'); refreshCart();
-              } finally { setTimeout(()=>b.disabled=false,600); }
-            });
-          });
+          pushMsg('bot','You might like these:');
+          renderSuggestionList(j.suggestions);
         } else {
           pushMsg('bot', j.reply || "Tell me a flavor, diet, or price range and I’ll suggest dishes.");
         }
@@ -421,13 +437,16 @@
       }
     }
 
-    document.getElementById('chat-send').addEventListener('click', handleSend);
+    // Send button (not visible now; we auto-send via chips or Enter)
     document.getElementById('chat-input').addEventListener('keydown', e=>{
       if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSend(); }
     });
+
+    // Chips: auto-send immediately (no manual button)
     document.querySelectorAll('.qchip').forEach(b=> b.addEventListener('click', ()=>{
-      document.getElementById('chat-input').value = b.dataset.q || b.textContent;
-      document.getElementById('chat-input').focus();
+      const v = b.dataset.q || b.textContent;
+      document.getElementById('chat-input').value = v;
+      handleSend(); // auto-trigger
     }));
 
     // Manual checkout button
@@ -448,7 +467,7 @@
     });
 
     // Init
-    refreshCart();
+    (async ()=>{ try{ await refreshCart(); }catch(_){} })();
   </script>
 </body>
 </html>
