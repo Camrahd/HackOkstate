@@ -2,8 +2,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import RecommendationAPI, MenuAPI, CartAPI, AgentAPI, landing, AgentOrderAPI
 from .checkout import cart_page, create_checkout_session, qr_for_url, remove_cart_item, set_cart_qty, checkout_success, checkout_cancel
-
-
+from . import billing
+from .webhooks import stripe_webhook
 router = DefaultRouter()
 router.register('menu', MenuAPI, basename='menu')
 
@@ -22,4 +22,10 @@ urlpatterns = [
     path('api/agent/', AgentAPI.as_view(), name='agent'),
     path('api/', include(router.urls)),
     path("api/agent/order/", AgentOrderAPI.as_view(), name="agent_order"),
+   
+    # ... your other api routes ...
+    path("api/billing/has-card/", billing.has_card, name="billing-has-card"),
+    path("api/pay-now/",           billing.pay_now,  name="billing-pay-now"),
+    path("stripe/webhook/", stripe_webhook, name="stripe-webhook"),
+
 ]

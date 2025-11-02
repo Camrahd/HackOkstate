@@ -1,84 +1,88 @@
 # dining/agent_runner.py
-import re
-from decimal import Decimal
-from typing import Dict, Any
-from django.contrib.auth.models import User, AnonymousUser
-from .agent_graph import build_graph, TOOLS
-from .models import Cart, CartItem, MenuItem
-from .views import get_guest_token
+from typing import Dict, Any, List
+from django.urls import reverse
+from urllib.parse import urlencode
 
-GRAPH = build_graph()
+from .models import MenuItem, Cart, CartItem
+from .agent import parse_message, search_candidates, rank, is_order_intent
+from .checkout import create_checkout_session_for_cart
 
 def _get_or_create_cart_for_request(request):
+    # if you already have a helper, you can reuse it; this is inline to avoid circular imports
+    from .views import get_guest_token
     if request.user.is_authenticated:
-        cart, _ = Cart.objects.get_or_create(user=request.user)
-        return cart, True, ""
-    guest_token = get_guest_token(request)
-    cart, _ = Cart.objects.get_or_create(user=None, guest_token=guest_token)
-    return cart, False, guest_token
+        cart, _ = Cart.objects.get_or_create(user=request.user, guest_token="")
+    else:
+        tok = get_guest_token(request)
+        cart, _ = Cart.objects.get_or_create(user=None, guest_token=tok)
+    return cart
 
-def _apply_tool_effects(tool_name: str, args: Dict[str, Any], request, cart):
-    if tool_name == "add_to_cart":
-        item_id = int(args.get("item_id"))
-        qty = int(args.get("qty", 1))
-        try:
-            item = MenuItem.objects.get(id=item_id, is_available=True)
-        except MenuItem.DoesNotExist:
-            return "Item not found."
-        ci, created = CartItem.objects.get_or_create(cart=cart, menu_item=item, defaults={"qty": qty})
+def _add_items(cart, items: List[MenuItem], qty:int=1):
+    added = []
+    for m in items:
+        ci, created = CartItem.objects.get_or_create(cart=cart, menu_item=m, defaults={"qty": qty})
         if not created:
             ci.qty += qty
             ci.save()
-        return f"Added {qty} × {item.name} to your cart."
-    return f"Ran tool {tool_name}."
+        added.append(m)
+    return added
 
-def run_order_agent(request, message: str):
-    # Seed conversation
-    state = {
-        "messages": [{"role":"system","content":
-                      "You are a food-ordering assistant. Use tools to search for dishes and add them to the cart. "\
-                      "Be concise. If the user mentions a quantity, add that many. Respect budgets and diets."}],
-    }
-    state["messages"].append({"role":"user", "content": message})
+def run_order_agent(request, message: str) -> Dict[str, Any]:
+    intents, prefs = parse_message(message)
+    candidates = search_candidates(prefs)
+    picks = rank(candidates, prefs)  # list[MenuItem]
 
-    # First agent pass (may request tools)
-    state = GRAPH.invoke(state)
+    # If we have no picks yet, fallback (popularity blend)
+    if not picks:
+        from .recommender import blended_recommendations
+        picks = blended_recommendations(user=request.user if request.user.is_authenticated else None, n=5)
 
-    # If tools were requested, actually execute them with request-aware context:
-    cart, is_auth, guest_token = _get_or_create_cart_for_request(request)
-    last = state["messages"][-1]
-    tool_results_text = []
-    if hasattr(last, "tool_calls") and last.tool_calls:
-        for tc in last.tool_calls:
-            tool_name = tc["name"]
-            args = tc["args"] or {}
-            # Force context for add_to_cart
-            if tool_name == "add_to_cart":
-                args["user_is_auth"] = is_auth
-                args["guest_token"] = guest_token
-            # Apply real effect:
-            res_text = _apply_tool_effects(tool_name, args, request, cart)
-            tool_results_text.append(res_text)
-            # Feed back a tool message so the agent can summarize
-            state["messages"].append({"role":"tool","name":tool_name,"content":res_text})
+    # --- Suggest mode (no order words) ---
+    if not is_order_intent(message):
+        # Return top suggestions only
+        from .serializers import MenuItemSerializer
+        data = MenuItemSerializer(picks[:6], many=True).data
+        return {
+            "detected_prefs": prefs,
+            "suggestions": data,
+            "follow_up": "Say 'order the first two' or 'order the spicy noodles' to add to cart."
+        }
 
-        # Let agent produce the final natural reply
-        state = GRAPH.invoke(state)
+    # --- Order mode ---
+    cart = _get_or_create_cart_for_request(request)
 
-    # Build cart summary
-    items = CartItem.objects.filter(cart=cart).select_related("menu_item")
-    summary = [{"name":it.menu_item.name, "qty":it.qty, "price":float(it.menu_item.price)} for it in items]
-    total = float(sum(it.qty * it.menu_item.price for it in items))
+    # simple: add top 1–2 items (you can improve by parsing quantities/indices)
+    to_add = picks[:2] if len(picks) >= 2 else picks[:1]
+    _add_items(cart, to_add, qty=1)
 
-    # Pick the last assistant message as follow-up
-    follow_up = ""
-    for m in reversed(state["messages"]):
-        if getattr(m, "role", None) == "assistant" or (isinstance(m, dict) and m.get("role")=="assistant"):
-            follow_up = m.get("content") if isinstance(m, dict) else m.content
-            break
+    from .serializers import MenuItemSerializer
+    added_data = MenuItemSerializer(to_add, many=True).data
 
-    return {
-        "actions_done": tool_results_text,
-        "cart": {"items": summary, "total": total},
-        "follow_up": follow_up or "Added to your cart. Anything else?",
-    }
+    # If not logged in: do NOT create Checkout; ask to sign in
+    if not request.user.is_authenticated:
+        login_url  = reverse("account_login") + "?" + urlencode({"next": "/cart/"})
+        google_url = "/accounts/google/login/?" + urlencode({"process": "login", "next": "/cart/"})
+        return {
+            "added": added_data,
+            "follow_up": "I’ve added items to your cart. Please sign in to continue to payment.",
+            "require_login": True,
+            "login_url": login_url,
+            "google_login_url": google_url,
+        }
+
+    # Logged in: create Stripe Checkout session and return url
+    try:
+        checkout_url, sid = create_checkout_session_for_cart(request, fulfillment="pickup")
+        return {
+            "added": added_data,
+            "follow_up": "Great choice! Opening checkout…",
+            "checkout_url": checkout_url,
+            "session_id": sid,
+        }
+    except Exception as e:
+        # Don’t break the chat flow if Stripe fails
+        return {
+            "added": added_data,
+            "error": str(e),
+            "follow_up": "Items added. You can review and pay from your cart."
+        }

@@ -10,6 +10,7 @@
     .card{transition:transform .15s ease, box-shadow .15s ease}
     .card:hover{transform:translateY(-2px); box-shadow:0 10px 28px rgba(0,0,0,.08)}
     .pill input:checked + label{background:#111;color:#fff}
+    .btn-disabled{opacity:.5; cursor:not-allowed}
   </style>
 </head>
 <body class="bg-gradient-to-b from-amber-50 to-white text-gray-900">
@@ -44,7 +45,7 @@
               </div>
               <div>
                 <label class="text-xs text-gray-600">Phone</label>
-                <input id="phone" class="mt-1 w-full px-3 py-2 rounded-xl border" placeholder="(555) 555‑5555" />
+                <input id="phone" class="mt-1 w-full px-3 py-2 rounded-xl border" placeholder="(555) 555-5555" />
               </div>
               <div class="md:col-span-2">
                 <label class="text-xs text-gray-600">Address line 1</label>
@@ -89,11 +90,11 @@
               </div>
               <div class="flex items-center gap-3">
                 <div class="inline-flex items-center border rounded-xl">
-                  <button class="px-3 py-1 text-lg qty-dec">−</button>
-                  <input class="w-10 text-center outline-none" value="{{ it.qty }}" />
-                  <button class="px-3 py-1 text-lg qty-inc">＋</button>
+                  <button class="px-3 py-1 text-lg qty-dec" type="button">−</button>
+                  <input class="w-10 text-center outline-none" inputmode="numeric" value="{{ it.qty }}" />
+                  <button class="px-3 py-1 text-lg qty-inc" type="button">＋</button>
                 </div>
-                <button class="text-red-600 hover:underline del">Remove</button>
+                <button class="text-red-600 hover:underline del" type="button">Remove</button>
               </div>
             </div>
             {% empty %}
@@ -117,13 +118,13 @@
           <div class="mt-4">
             {% if user.is_authenticated %}
             <button id="pay" class="w-full px-4 py-3 rounded-2xl bg-black text-white">Pay now</button>
-          {% else %}
+            {% else %}
             <div class="text-sm text-gray-600 mb-2">Please sign in to checkout.</div>
             <a href="/accounts/google/login/?process=login&next=/cart/"
                class="w-full inline-flex justify-center px-4 py-3 rounded-2xl border">Continue with Google</a>
             <a href="/accounts/login/?next=/cart/"
                class="mt-2 w-full inline-flex justify-center px-4 py-3 rounded-2xl bg-black text-white">Email login</a>
-          {% endif %}
+            {% endif %}
           </div>
 
           <details class="mt-4">
@@ -159,6 +160,8 @@
     const sumFee = document.getElementById('sum-fee');
     const rowFee = document.getElementById('row-fee');
     const sumTotal = document.getElementById('sum-total');
+    const payBtn = document.getElementById('pay');
+    const msg = document.getElementById('msg');
 
     const DELIVERY_FEE = 3.50;
 
@@ -166,11 +169,23 @@
       return document.getElementById('opt-delivery').checked ? 'delivery' : 'pickup';
     }
 
+    function cartIsEmpty(){
+      return itemsRoot.querySelectorAll('[data-item-id]').length === 0;
+    }
+
+    function updatePayDisabled(){
+      if (!payBtn) return;
+      const empty = cartIsEmpty();
+      payBtn.disabled = empty;
+      payBtn.classList.toggle('btn-disabled', empty);
+      payBtn.classList.toggle('opacity-50', empty);
+    }
+
     function recalc(){
       let subtotal = 0;
       itemsRoot.querySelectorAll('[data-item-id]').forEach(row=>{
         const price = parseFloat(row.getAttribute('data-price')) || 0;
-        const qty = parseInt(row.querySelector('input').value || '0');
+        const qty = Math.max(0, parseInt(row.querySelector('input').value || '0', 10));
         subtotal += price * qty;
       });
       const tax = +(subtotal * 0.08).toFixed(2);
@@ -180,6 +195,7 @@
       sumFee.textContent = formatMoney(fee);
       rowFee.classList.toggle('hidden', fee===0);
       sumTotal.textContent = formatMoney(subtotal + tax + fee);
+      updatePayDisabled();
     }
 
     // Toggle address visibility
@@ -192,77 +208,127 @@
       recalc();
     });
 
-    // Qty and delete actions
+    // Qty & delete actions
     itemsRoot.addEventListener('click', async (e)=>{
       const row = e.target.closest('[data-item-id]');
       if(!row) return;
       const id = row.getAttribute('data-item-id');
+
       if(e.target.classList.contains('qty-inc')){
         const input = row.querySelector('input');
-        input.value = parseInt(input.value||'0') + 1; recalc();
-        await fetch(`/api/cart/item/${id}/set-qty/`, {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken}, body: JSON.stringify({qty: parseInt(input.value)})});
+        input.value = Math.max(0, parseInt(input.value||'0', 10) + 1);
+        recalc();
+        await fetch(`/api/cart/item/${id}/set-qty/`, {
+          method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},
+          body: JSON.stringify({qty: parseInt(input.value, 10)})
+        });
       } else if(e.target.classList.contains('qty-dec')){
         const input = row.querySelector('input');
-        input.value = Math.max(0, parseInt(input.value||'0') - 1); recalc();
-        const qty = parseInt(input.value);
-        await fetch(`/api/cart/item/${id}/set-qty/`, {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken}, body: JSON.stringify({qty})});
+        input.value = Math.max(0, parseInt(input.value||'0', 10) - 1);
+        recalc();
+        const qty = parseInt(input.value, 10);
+        await fetch(`/api/cart/item/${id}/set-qty/`, {
+          method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},
+          body: JSON.stringify({qty})
+        });
         if(qty===0){ row.remove(); recalc(); }
       } else if(e.target.classList.contains('del')){
-        row.remove(); recalc();
-        await fetch(`/api/cart/item/${id}/delete/`, {method:'POST', headers:{'X-CSRFToken':csrftoken}});
+        row.remove();
+        recalc();
+        await fetch(`/api/cart/item/${id}/delete/`, {
+          method:'POST', headers:{'X-CSRFToken':csrftoken}
+        });
       }
     });
 
-    // Pay button
-    document.getElementById('pay').onclick = async ()=>{
-      const msg = document.getElementById('msg');
-      msg.textContent='';
-      const fulfillment = currentFulfillment();
-      const payload = { fulfillment, address: {}, notes: '' };
-      if(fulfillment==='delivery'){
-        const name = document.getElementById('name').value.trim();
-        const phone = document.getElementById('phone').value.trim();
-        const line1 = document.getElementById('line1').value.trim();
-        const line2 = document.getElementById('line2').value.trim();
-        const city = document.getElementById('city').value.trim();
-        const state = document.getElementById('state').value.trim();
-        const postal_code = document.getElementById('postal').value.trim();
-        const notes = document.getElementById('notes').value.trim();
-        if(!name||!phone||!line1||!city||!state||!postal_code){
-          msg.textContent = 'Please complete delivery address.';
+    // Also recalc if a qty input is manually edited then blurred
+    itemsRoot.addEventListener('change', async (e)=>{
+      const row = e.target.closest('[data-item-id]');
+      if(!row || e.target.tagName !== 'INPUT') return;
+      const id = row.getAttribute('data-item-id');
+      const qty = Math.max(0, parseInt(e.target.value || '0', 10));
+      e.target.value = qty;
+      recalc();
+      await fetch(`/api/cart/item/${id}/set-qty/`, {
+        method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},
+        body: JSON.stringify({qty})
+      });
+      if(qty===0){ row.remove(); recalc(); }
+    });
+
+    // Pay button (only rendered for signed-in users)
+    if (payBtn){
+      payBtn.onclick = async ()=>{
+        msg.textContent='';
+        if (cartIsEmpty()){
+          msg.textContent = 'Your cart is empty. Add items to continue.';
           return;
         }
-        payload.address = {name, phone, line1, line2, city, state, postal_code};
-        payload.notes = notes;
-      }
 
-      try{
-        const r = await fetch('/api/create-checkout-session/', {
-          method:'POST',
-          headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},
-          credentials: 'same-origin',
-          body: JSON.stringify(payload)
-        });
-        if(!r.ok){ msg.textContent = 'Could not start checkout.'; return; }
-        const j = await r.json();
-        if(j.checkout_url){
-          // Redirect now
-          window.location.href = j.checkout_url;
-          // And show QR for users who prefer to scan
-          const enc = encodeURIComponent(j.checkout_url);
-          document.getElementById('qr').src = '/qr/?u='+enc;
-          const link = document.getElementById('checkout-link');
-          link.href = j.checkout_url;
-          link.textContent = 'Open Checkout';
-        } else {
-          msg.textContent = 'Unexpected response from server.';
+        const fulfillment = currentFulfillment();
+        const payload = { fulfillment, address: {}, notes: '' };
+
+        if(fulfillment==='delivery'){
+          const name = document.getElementById('name').value.trim();
+          const phone = document.getElementById('phone').value.trim();
+          const line1 = document.getElementById('line1').value.trim();
+          const line2 = document.getElementById('line2').value.trim();
+          const city = document.getElementById('city').value.trim();
+          const state = document.getElementById('state').value.trim();
+          const postal_code = document.getElementById('postal').value.trim();
+          const notes = document.getElementById('notes').value.trim();
+          if(!name||!phone||!line1||!city||!state||!postal_code){
+            msg.textContent = 'Please complete delivery address.';
+            return;
+          }
+          payload.address = {name, phone, line1, line2, city, state, postal_code};
+          payload.notes = notes;
         }
-      } catch(e){
-        console.error(e); msg.textContent = 'Network error.';
-      }
-    };
 
-    // Initial calc
+        try{
+          const r = await fetch('/api/create-checkout-session/', {
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+          });
+
+          const text = await r.text();
+          let j = {};
+          try { j = text ? JSON.parse(text) : {}; } catch {}
+
+          if (r.status === 401 || j.error === 'login_required'){
+            msg.textContent = 'Please sign in to pay.';
+            return;
+          }
+          if (r.status === 400 && (j.error === 'empty_cart' || /cart is empty/i.test(j.message || ''))){
+            msg.textContent = 'Your cart is empty. Add items to continue.';
+            return;
+          }
+          if (!r.ok){
+            msg.textContent = j.message || 'Could not start checkout.';
+            return;
+          }
+
+          if(j.checkout_url){
+            // Redirect now
+            window.location.href = j.checkout_url;
+            // Also show QR/link for users who prefer to scan/open on phone
+            const enc = encodeURIComponent(j.checkout_url);
+            const qr = document.getElementById('qr');
+            if (qr) qr.src = '/qr/?u='+enc;
+            const link = document.getElementById('checkout-link');
+            if (link){ link.href = j.checkout_url; link.textContent = 'Open Checkout'; }
+          } else {
+            msg.textContent = 'Unexpected response from server.';
+          }
+        } catch(e){
+          console.error(e); msg.textContent = 'Network error.';
+        }
+      };
+    }
+
+    // Initial calc + disable state
     recalc();
   </script>
 </body>

@@ -75,3 +75,8 @@ def rank(items, prefs):
 
     # Otherwise: popularity sort
     return sorted(items, key=lambda x: x.popularity, reverse=True)[:8]
+
+ORDER_WORDS = ("order", "add", "buy", "checkout", "place", "purchase", "get", "i'll take", "i will take")
+def is_order_intent(msg: str) -> bool:
+    m = msg.lower()
+    return any(w in m for w in ORDER_WORDS)
