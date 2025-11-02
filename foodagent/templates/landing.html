@@ -26,7 +26,7 @@
 <body class="bg-gradient-to-b from-amber-50 to-white text-gray-900">
   <!-- NAVBAR -->
   <header class="sticky top-0 z-40 bg-white/70 backdrop-blur border-b border-orange-100">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="w-full px-4 md:px-6 lg:px-8 py-3 flex items-center justify-between">
       <a href="/" class="flex items-center gap-2 font-bold text-xl">
         <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-orange-600 text-white">🍽️</span>
         OSU Dining
@@ -36,32 +36,80 @@
         <a href="#picks" class="hover:text-orange-700">Top picks</a>
         <a href="#faq" class="hover:text-orange-700">FAQ</a>
       </nav>
-      <div class="flex items-center gap-2">
-        {% if user.is_authenticated %}
-          <div class="hidden sm:flex items-center gap-2 mr-1 text-sm text-gray-700">
-            <div class="w-8 h-8 rounded-full bg-orange-600 text-white grid place-items-center font-semibold">
-              {{ user.first_name|default:user.username|slice:":1"|upper }}
-            </div>
-            <span class="max-w-[140px] truncate">Hi, {{ user.first_name|default:user.username }}</span>
-          </div>
-          <a href="/accounts/logout/" class="text-sm hover:text-orange-700">Sign out</a>
-        {% else %}
-          <a href="{% provider_login_url 'google' %}" class="text-sm px-3 py-2 rounded-xl border flex items-center">
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-4 h-4 mr-2" alt="">Sign in
-          </a>
-          <a href="/accounts/login/" class="text-sm hover:text-orange-700">Email login</a>
-        {% endif %}
-        <a href="/cart/" class="relative text-sm px-3 py-2 rounded-xl bg-black text-white hover:opacity-90 flex items-center gap-2">
-          🛒 <span id="cart-count" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-600 text-xs">0</span>
-          <span class="hidden sm:inline">Cart</span>
-        </a>
-        <a href="/agent/" class="text-sm px-3 py-2 rounded-xl bg-orange-600 text-white hover:bg-orange-700">Open Agent</a>
+
+<!-- RIGHT SIDE: cart, open agent, then user menu on the far right -->
+<div class="flex items-center gap-2">
+
+  <!-- Cart -->
+  <a href="/cart/" class="relative text-sm px-3 py-2 rounded-xl bg-black text-white hover:opacity-90 flex items-center gap-2">
+    🛒 <span id="cart-count" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-600 text-xs">0</span>
+    <span class="hidden sm:inline">Cart</span>
+  </a>
+
+  <!-- Open Agent -->
+  <a href="/agent/" class="text-sm px-3 py-2 rounded-xl bg-orange-600 text-white hover:bg-orange-700">Open Agent</a>
+
+  {% if user.is_authenticated %}
+    <!-- Avatar + greeting + dropdown -->
+    <div class="relative" id="user-menu-wrap">
+      <button id="user-menu-btn"
+        class="flex items-center gap-2 group px-2 py-1 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-300"
+        aria-haspopup="menu" aria-expanded="false" aria-controls="user-menu">
+        <span class="w-8 h-8 rounded-full bg-orange-600 text-white grid place-items-center font-semibold">
+          {{ user.first_name|default:user.username|slice:":1"|upper }}
+        </span>
+        <span class="hidden sm:block text-sm text-gray-800 max-w-[140px] truncate">
+          Hi, {{ user.first_name|default:user.username }}
+        </span>
+        <svg class="w-4 h-4 text-gray-500 group-hover:text-gray-700" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+
+      <!-- Dropdown -->
+      <div id="user-menu"
+        class="hidden absolute right-0 mt-2 w-56 rounded-xl border bg-white shadow-lg z-50"
+        role="menu" aria-labelledby="user-menu-btn">
+        <div class="px-3 py-2 text-xs text-gray-500">Signed in as {{ user.email|default:user.username }}</div>
+        <div class="border-t my-1"></div>
+        <a href="/account/profile/" class="block px-4 py-2.5 text-sm hover:bg-gray-50" role="menuitem">Profile settings</a>
+        <a href="/orders/history/" class="block px-4 py-2.5 text-sm hover:bg-gray-50" role="menuitem">Order history</a>
+        <a href="/billing/cards/" class="block px-4 py-2.5 text-sm hover:bg-gray-50" role="menuitem">Saved payment cards</a>
+        <div class="border-t my-1"></div>
+        <a href="/accounts/logout/" class="block px-4 py-2.5 text-sm text-red-600 hover:bg-red-50" role="menuitem">Sign out</a>
       </div>
+    </div>
+  {% else %}
+    <!-- Guest version (optional): keep if you still want auth links visible -->
+    <div class="relative" id="user-menu-wrap">
+      <button id="user-menu-btn"
+        class="flex items-center gap-2 group px-2 py-1 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-300"
+        aria-haspopup="menu" aria-expanded="false" aria-controls="user-menu">
+        <span class="w-8 h-8 rounded-full bg-orange-600 text-white grid place-items-center font-semibold">G</span>
+        <span class="hidden sm:block text-sm text-gray-800 max-w-[140px] truncate">Hi, Guest</span>
+        <svg class="w-4 h-4 text-gray-500 group-hover:text-gray-700" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+      <div id="user-menu"
+        class="hidden absolute right-0 mt-2 w-56 rounded-xl border bg-white shadow-lg z-50"
+        role="menu" aria-labelledby="user-menu-btn">
+        <div class="px-3 py-2 text-xs text-gray-500">You’re not signed in</div>
+        <div class="border-t my-1"></div>
+        <a href="{% provider_login_url 'google' %}" class="block px-4 py-2.5 text-sm hover:bg-gray-50" role="menuitem">Sign in with Google</a>
+        <a href="/accounts/login/" class="block px-4 py-2.5 text-sm hover:bg-gray-50" role="menuitem">Email login</a>
+        <a href="/accounts/signup/" class="block px-4 py-2.5 text-sm hover:bg-gray-50" role="menuitem">Create account</a>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+
     </div>
   </header>
 
   <!-- HERO -->
-  <section class="relative">
+  <section class="relative" id="how">
     <div class="absolute inset-0 -z-10">
       <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=1600&auto=format&fit=crop" alt="hero" class="w-full h-[480px] object-cover"/>
       <div class="absolute inset-0 bg-gradient-to-b from-black/40 to-black/10"></div>
@@ -296,6 +344,31 @@
     // Init
     loadRecs();
     refreshCartCount();
+  </script>
+
+  <!-- Dropdown JS (open/close, click outside, Esc) -->
+  <script>
+    (function(){
+      const btn  = document.getElementById('user-menu-btn');
+      const menu = document.getElementById('user-menu');
+      if(!btn || !menu) return;
+
+      function open(){ menu.classList.remove('hidden'); btn.setAttribute('aria-expanded','true'); }
+      function close(){ menu.classList.add('hidden'); btn.setAttribute('aria-expanded','false'); }
+      function toggle(){ menu.classList.contains('hidden') ? open() : close(); }
+
+      btn.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(); });
+      document.addEventListener('click', (e)=>{ if(!menu.contains(e.target) && e.target !== btn) close(); });
+      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') close(); });
+
+      // Enter/Space opens and focuses first link
+      btn.addEventListener('keydown', (e)=>{
+        if((e.key==='Enter'||e.key===' ') && menu.classList.contains('hidden')){
+          e.preventDefault(); open();
+          const first = menu.querySelector('a,button'); first && first.focus();
+        }
+      });
+    })();
   </script>
 
   <!-- Bot Launcher -->
