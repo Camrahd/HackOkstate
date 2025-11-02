@@ -1,7 +1,7 @@
-# Dockerfile — Render-ready, no GDAL compile hell
+# Dockerfile — Render-ready, GDAL fixed, requirements copied
 FROM python:3.11-slim
 
-# 1. Install system dependencies (GDAL + PostgreSQL client)
+# 1. Install system deps
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
@@ -9,23 +9,27 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Set GDAL version to match system package
+# 2. Set GDAL version
 ENV GDAL_VERSION=3.6.2
 
-# 3. Install Python deps — GDAL wheel will match system lib
-RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --no-cache-dir \
-    "gdal==${GDAL_VERSION}" \
-    -r requirements.txt
-
-# 4. Copy app
+# 3. Set workdir
 WORKDIR /app
+
+# 4. COPY requirements FIRST (better caching)
+COPY requirements.txt .
+
+# 5. Install GDAL + dependencies
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir "gdal==${GDAL_VERSION}"
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 6. Copy app code
 COPY . .
 
-# 5. Django setup
+# 7. Django setup
 RUN python manage.py collectstatic --noinput || true
 RUN python manage.py migrate --noinput || true
 
-# 6. Run as non-root
+# 8. Run
 EXPOSE 8000
 CMD ["gunicorn", "foodagent.wsgi:application", "--bind", "0.0.0.0:8000"]
