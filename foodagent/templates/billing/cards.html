@@ -1,0 +1,67 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Saved payment cards • OSU Dining</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-b from-amber-50 to-white text-gray-900">
+  <header class="sticky top-0 z-40 bg-white/70 backdrop-blur border-b">
+    <div class="w-full px-4 md:px-6 lg:px-8 py-3 flex items-center justify-between">
+        <button type="button"
+          class="px-4 py-2 rounded-xl border hover:bg-gray-50"
+          onclick="if (document.referrer) { window.history.back(); } else { window.location.href = '/'; }">
+    ←
+  </button>
+      <a href="/" class="flex items-center gap-2 font-bold text-xl">
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-orange-600 text-white">🍽️</span>
+        OSU Dining
+      </a>
+      <a href="/cart/" class="text-sm px-3 py-2 rounded-xl bg-black text-white">Cart</a>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold">Saved payment cards</h1>
+      <button class="text-sm px-3 py-2 rounded-xl bg-orange-600 text-white hover:bg-orange-700" onclick="track('card_add_click'); window.location.href='/billing/add-card/';">Add new card</button>
+    </div>
+
+    <div class="mt-6 space-y-3">
+      {% for c in cards %}
+        <div class="bg-white border rounded-2xl p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gray-100 grid place-items-center text-sm font-semibold">
+              {{ c.brand|title|slice:":2" }}
+            </div>
+            <div>
+              <div class="font-semibold">{{ c.brand|title }} •••• {{ c.last4 }}</div>
+              <div class="text-sm text-gray-600">Exp {{ c.exp_month }}/{{ c.exp_year }}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            {% if c.is_default %}
+              <span class="text-xs px-2 py-1 rounded-full border bg-green-50 text-green-700 border-green-200">Default</span>
+            {% else %}
+              <button class="text-sm px-3 py-1.5 rounded-xl border hover:bg-gray-50" onclick="track('card_set_default', {id: {{c.id}}}); alert('Set as default (stub).')">Set default</button>
+            {% endif %}
+            <button class="text-sm px-3 py-1.5 rounded-xl text-red-600 border border-red-200 hover:bg-red-50" onclick="track('card_delete', {id: {{c.id}}}); alert('Card removed (stub).')">Remove</button>
+          </div>
+        </div>
+      {% empty %}
+        <div class="text-gray-600">No cards saved yet.</div>
+      {% endfor %}
+    </div>
+  </main>
+
+  <script>
+    function track(event, data={}) {
+      try {
+        fetch('/api/track/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({event, ...data})});
+      } catch(e) {}
+    }
+  </script>
+</body>
+</html>

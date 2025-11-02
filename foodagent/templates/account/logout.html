@@ -1,0 +1,17 @@
+{% extends "base_auth.html" %}
+{% block title %}Sign out — OSU Dining{% endblock %}
+{% block body %}
+<div class="glass rounded-3xl p-6 md:p-10 shadow-xl border max-w-xl">
+  <h1 class="text-2xl md:text-3xl font-bold">Sign out</h1>
+  <p class="text-gray-600 mt-2">Are you sure you want to sign out?</p>
+
+  <form method="post" action="{% url 'account_logout' %}" class="mt-6 flex items-center gap-3">
+    {% csrf_token %}
+    {% if redirect_field_value %}
+      <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+    {% endif %}
+    <button class="px-5 py-2.5 rounded-xl bg-black text-white hover:opacity-90">Sign out</button>
+    <a href="/" class="px-5 py-2.5 rounded-xl border hover:bg-gray-50">Cancel</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base_auth.html" %}
+{% load socialaccount %}
+{% block title %}Sign in — OSU Dining{% endblock %}
+{% block body %}
+<div class="glass rounded-3xl p-6 md:p-10 shadow-xl border">
+  <h1 class="text-2xl md:text-3xl font-bold">Sign in</h1>
+  <p class="text-gray-600 mt-2">Welcome back! Use email & password or continue with Google.</p>
+
+  {% if form.non_field_errors %}
+    <div class="mt-4 p-3 rounded-xl bg-red-50 text-red-700 text-sm">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+
+  <form method="post" action="{% url 'account_login' %}" class="mt-6 space-y-4">
+    {% csrf_token %}
+    <div>
+      <label class="block text-sm font-medium">Email or username</label>
+      <input type="text" name="{{ form.login.name }}" value="{{ form.login.value|default:'' }}"
+             class="w-full px-4 py-3 rounded-2xl border outline-none focus:ring-2 focus:ring-orange-500"/>
+      {{ form.login.errors }}
+    </div>
+    <div>
+      <label class="block text-sm font-medium">Password</label>
+      <input type="password" name="{{ form.password.name }}"
+             class="w-full px-4 py-3 rounded-2xl border outline-none focus:ring-2 focus:ring-orange-500"/>
+      {{ form.password.errors }}
+    </div>
+    <div class="flex items-center justify-between text-sm">
+      <label class="inline-flex items-center gap-2">
+        <input type="checkbox" name="{{ form.remember.name }}" class="rounded"/>
+        Remember me
+      </label>
+      <a href="{% url 'account_reset_password' %}" class="underline">Forgot password?</a>
+    </div>
+    <button class="w-full px-4 py-3 rounded-2xl bg-black text-white hover:opacity-90">Sign in</button>
+  </form>
+
+  <div class="my-6 flex items-center gap-3 text-gray-400">
+    <div class="flex-1 border-t"></div><span class="text-sm">or</span><div class="flex-1 border-t"></div>
+  </div>
+
+  <a href="{% provider_login_url 'google' %}"
+     class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border bg-white hover:bg-gray-50">
+    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt=""> Sign in with Google
+  </a>
+
+  <p class="text-sm text-gray-700 mt-6">New here?
+    <a href="{% url 'account_signup' %}" class="underline">Create an account</a>.
+  </p>
+</div>
+{% endblock %}

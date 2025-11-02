@@ -34,6 +34,11 @@
   <!-- NAV -->
   <header class="sticky top-0 z-40 bg-white/70 backdrop-blur border-b">
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <button type="button"
+          class="px-4 py-2 rounded-xl border hover:bg-gray-50"
+          onclick="if (document.referrer) { window.history.back(); } else { window.location.href = '/'; }">
+    ←
+  </button>
       <a href="/" class="flex items-center gap-2 font-bold text-xl">
         <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-orange-600 text-white">🍽️</span>
         OSU Dining Agent

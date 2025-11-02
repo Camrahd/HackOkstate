@@ -1,0 +1,68 @@
+{% extends "base_auth.html" %}
+{% load socialaccount %}
+{% block title %}Create account — OSU Dining{% endblock %}
+{% block body %}
+<div class="glass rounded-3xl p-6 md:p-10 shadow-xl border">
+  <h1 class="text-2xl md:text-3xl font-bold">Create account</h1>
+  <p class="text-gray-600 mt-2">Join to save orders, track history, and faster checkout.</p>
+
+  {% if form.non_field_errors %}
+    <div class="mt-4 p-3 rounded-xl bg-red-50 text-red-700 text-sm">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+
+  <form method="post" action="{% url 'account_signup' %}" class="mt-6 space-y-4">
+    {% csrf_token %}
+    {{ form.email.errors }}
+    <div>
+      <label class="block text-sm font-medium">Email</label>
+      <input type="email" name="{{ form.email.name }}" value="{{ form.email.value|default:'' }}"
+             class="w-full px-4 py-3 rounded-2xl border outline-none focus:ring-2 focus:ring-orange-500"/>
+    </div>
+
+    {{ form.username.errors }}
+    {% if form.username %}
+    <div>
+      <label class="block text-sm font-medium">Username</label>
+      <input type="text" name="{{ form.username.name }}" value="{{ form.username.value|default:'' }}"
+             class="w-full px-4 py-3 rounded-2xl border outline-none focus:ring-2 focus:ring-orange-500"/>
+    </div>
+    {% endif %}
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium">Password</label>
+        <input type="password" name="{{ form.password1.name }}"
+               class="w-full px-4 py-3 rounded-2xl border outline-none focus:ring-2 focus:ring-orange-500"/>
+        {{ form.password1.errors }}
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Confirm password</label>
+        <input type="password" name="{{ form.password2.name }}"
+               class="w-full px-4 py-3 rounded-2xl border outline-none focus:ring-2 focus:ring-orange-500"/>
+        {{ form.password2.errors }}
+      </div>
+    </div>
+
+    {% if redirect_field_value %}
+      <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+    {% endif %}
+
+    <button class="w-full px-4 py-3 rounded-2xl bg-orange-600 text-white hover:bg-orange-700">Create account</button>
+  </form>
+
+  <div class="my-6 flex items-center gap-3 text-gray-400">
+    <div class="flex-1 border-t"></div><span class="text-sm">or</span><div class="flex-1 border-t"></div>
+  </div>
+
+  <a href="{% provider_login_url 'google' %}"
+     class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border bg-white hover:bg-gray-50">
+    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt=""> Continue with Google
+  </a>
+
+  <p class="text-sm text-gray-700 mt-6">Already have an account?
+    <a href="{% url 'account_login' %}" class="underline">Sign in</a>.
+  </p>
+</div>
+{% endblock %}

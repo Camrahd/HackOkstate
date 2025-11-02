@@ -1,0 +1,113 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Order history • OSU Dining</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-b from-amber-50 to-white text-gray-900">
+  <header class="sticky top-0 z-40 bg-white/70 backdrop-blur border-b">
+    <div class="w-full px-4 md:px-6 lg:px-8 py-3 flex items-center justify-between">
+        <button type="button"
+          class="px-4 py-2 rounded-xl border hover:bg-gray-50"
+          onclick="if (document.referrer) { window.history.back(); } else { window.location.href = '/'; }">
+    ←
+  </button>
+      <a href="/" class="flex items-center gap-2 font-bold text-xl">
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-orange-600 text-white">🍽️</span>
+        OSU Dining
+      </a>
+      <a href="/cart/" class="text-sm px-3 py-2 rounded-xl bg-black text-white">Cart</a>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold">Order history</h1>
+      <input id="search" class="border rounded-xl px-3 py-2 text-sm" placeholder="Search by #, status…"/>
+    </div>
+
+    <div id="orders" class="mt-6 space-y-3">
+      {% for o in orders %}
+        <div class="bg-white border rounded-2xl p-4">
+          <div class="flex items-center justify-between">
+            <div class="font-semibold">#{{ o.number }}</div>
+            <div class="text-sm text-gray-600">{{ o.created|date:"M d, Y H:i" }}</div>
+          </div>
+
+          {# item chips under the order number #}
+          {% if o.items %}
+            <div class="mt-1 text-sm text-gray-700 flex flex-wrap gap-1">
+              {% for it in o.items %}
+                <span class="px-2 py-0.5 rounded-full bg-gray-100 border text-gray-800">
+                  {{ it.name }} × {{ it.qty }}
+                </span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="mt-2 flex items-center gap-3 text-sm">
+            {% if o.status == 'paid' %}
+              <span class="px-2 py-0.5 rounded-full border bg-green-50 text-green-700 border-green-200">Paid</span>
+            {% elif o.status == 'pending' %}
+              <span class="px-2 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200">Pending</span>
+            {% elif o.status == 'failed' %}
+              <span class="px-2 py-0.5 rounded-full border bg-red-50 text-red-700 border-red-200">Failed</span>
+            {% else %}
+              <span class="px-2 py-0.5 rounded-full border bg-gray-50 text-gray-700 border-gray-200">Canceled</span>
+            {% endif %}
+            <span class="text-gray-600">$ {{ o.total|floatformat:2 }}</span>
+          </div>
+
+          <div class="mt-3 flex items-center gap-2">
+            {% if o.payment_ref %}
+              <a href="/orders/{{ o.id }}/receipt/" class="text-sm px-3 py-1.5 rounded-xl border hover:bg-gray-50">
+                View receipt
+              </a>
+            {% endif %}
+            <button class="text-sm px-3 py-1.5 rounded-xl bg-orange-600 text-white hover:bg-orange-700"
+                    onclick="track('order_reorder', {id: {{o.id}}}); alert('Reorder (stub)');">
+              Reorder
+            </button>
+          </div>
+        </div>
+      {% empty %}
+        <div class="text-gray-600">No orders yet.</div>
+      {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+      <div class="mt-6 flex items-center justify-between">
+        {% if page_obj.has_previous %}
+          <a class="px-3 py-1.5 rounded-xl border" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        {% else %}
+          <span class="px-3 py-1.5 rounded-xl border opacity-50">Previous</span>
+        {% endif %}
+        <div class="text-sm text-gray-600">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
+        {% if page_obj.has_next %}
+          <a class="px-3 py-1.5 rounded-xl border" href="?page={{ page_obj.next_page_number }}">Next</a>
+        {% else %}
+          <span class="px-3 py-1.5 rounded-xl border opacity-50">Next</span>
+        {% endif %}
+      </div>
+    {% endif %}
+  </main>
+
+  <script>
+    function track(event, data={}) {
+      try { fetch('/api/track/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({event, ...data})}); }
+      catch(e) {}
+    }
+    // simple filter
+    const search = document.getElementById('search');
+    search?.addEventListener('input', () => {
+      const q = search.value.toLowerCase();
+      document.querySelectorAll('#orders > div').forEach(card => {
+        card.style.display = card.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>

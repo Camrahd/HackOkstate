@@ -1,0 +1,51 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Receipt • OSU Dining</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-b from-amber-50 to-white text-gray-900">
+  <header class="sticky top-0 z-40 bg-white/70 backdrop-blur border-b">
+    <div class="w-full px-4 md:px-6 lg:px-8 py-3 flex items-center justify-between">
+        <button type="button"
+          class="px-4 py-2 rounded-xl border hover:bg-gray-50"
+          onclick="if (document.referrer) { window.history.back(); } else { window.location.href = '/'; }">
+    ←
+  </button>
+      <a href="/" class="flex items-center gap-2 font-bold text-xl">
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-orange-600 text-white">🍽️</span>
+        OSU Dining
+      </a>
+      <a href="/cart/" class="text-sm px-3 py-2 rounded-xl bg-black text-white">Cart</a>
+    </div>
+  </header>
+<body class="bg-gradient-to-b from-amber-50 to-white text-gray-900">
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    {% if not_allowed %}
+      <div class="bg-white border rounded-2xl p-6">You don’t have access to this receipt.</div>
+    {% elif not order %}
+      <div class="bg-white border rounded-2xl p-6">Receipt not found.</div>
+    {% else %}
+      <div class="bg-white border rounded-2xl p-6">
+        <h1 class="text-xl font-bold">Receipt #ORD-{{ order.id }}</h1>
+        <div class="text-sm text-gray-600 mt-1">{{ order.created_at|date:"M d, Y H:i" }}</div>
+        <div class="mt-4 space-y-2">
+          {% for it in items %}
+            <div class="flex items-center justify-between text-sm">
+              <div>{{ it.menu_item.name }} × {{ it.qty }}</div>
+              <div>$ {{ it.price_each|floatformat:2 }}</div>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="mt-4 border-t pt-3 font-semibold">Total: $ {{ order.total|floatformat:2 }}</div>
+        {% if order.payment_ref %}
+          <div class="text-xs text-gray-600 mt-2">Payment ref: {{ order.payment_ref }}</div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </main>
+</body>
+</html>

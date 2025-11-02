@@ -4,6 +4,10 @@ from .views import RecommendationAPI, MenuAPI, CartAPI, AgentAPI, landing, Agent
 from .checkout import cart_page, create_checkout_session, qr_for_url, remove_cart_item, set_cart_qty, checkout_success, checkout_cancel
 from . import billing, views
 from .webhooks import stripe_webhook
+from . import views_account
+# urls.py
+from django.urls import path
+from .views_account import profile_settings, order_history, billing_cards
 router = DefaultRouter()
 router.register('menu', MenuAPI, basename='menu')
 
@@ -23,6 +27,15 @@ urlpatterns = [
     path('api/agent/', AgentAPI.as_view(), name='agent'),
     path('api/', include(router.urls)),
     path("api/agent/order/", AgentOrderAPI.as_view(), name="agent_order"),
+    path("account/profile/", views_account.profile_settings, name="profile_settings"),
+    path("orders/history/", views_account.order_history, name="order_history"),
+    path("billing/cards/", views_account.billing_cards, name="billing_cards"),
+    path("orders/<int:order_id>/receipt/", views_account.order_receipt, name="order_receipt"),  # optional
+
+    path("account/profile/", profile_settings, name="profile_settings"),
+    path("orders/history/", order_history, name="order_history"),
+    path("billing/cards/", billing_cards, name="billing_cards"),
+
    
     # ... your other api routes ...
     path("api/billing/has-card/", billing.has_card, name="billing-has-card"),
