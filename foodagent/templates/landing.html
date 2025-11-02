@@ -5,8 +5,8 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>OSU Dining • Stillwater — Manual & Agent Ordering</title>
-  <meta name="description" content="Order your way at OSU Stillwater: browse manually or ask the Agent to recommend and place orders for you."/>
+  <title>OSU Dining • Stillwater — Manual Ordering</title>
+  <meta name="description" content="Browse menus and add items to your cart. Or launch the OSU Dining Agent to recommend and place orders for you."/>
   <meta property="og:title" content="OSU Dining – Stillwater Campus"/>
   <meta property="og:description" content="Manual browsing + AI agent ordering for OSU Stillwater Dining."/>
   <meta property="og:type" content="website"/>
@@ -17,51 +17,10 @@
   <link rel="icon" href="{% static 'favicon.ico' %}"/>
 
   <style>
-    :root{
-      --osu-orange: #f97316; /* tailwind orange-500/600 vibe */
-      --ink: #0b0b0b;
-    }
+    :root{ --osu-orange:#f97316; --ink:#0b0b0b; }
     .glass { backdrop-filter: blur(10px); background: rgba(255,255,255,.7); }
     .card { transition: transform .15s ease, box-shadow .15s ease; }
     .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
-    /* Chat bubbles */
-    .bubble { border-radius: 1rem; padding: .6rem .8rem; font-size: .92rem; }
-    .bubble-bot { background: #f3f4f6; color:#111827; }
-    .bubble-user { background: var(--osu-orange); color: white; }
-    /* Typing dots */
-    .typing { display:inline-flex; gap:4px; }
-    .typing > i { width:6px; height:6px; border-radius:999px; background:#9ca3af; opacity:.5; animation: t 1.3s infinite; }
-    .typing > i:nth-child(2){ animation-delay:.15s }
-    .typing > i:nth-child(3){ animation-delay:.3s }
-    @keyframes t { 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
-    /* Product pill */
-    .item-pill { border:1px solid #e5e7eb; border-radius: 1rem; padding:.6rem; }
-    .btn { border-radius: .8rem; padding:.5rem .8rem; }
-    .btn-dark { background:#111827; color:white; }
-    .btn-orange { background: var(--osu-orange); color:white; }
-    .btn-ghost { background:white; border:1px solid #e5e7eb; }
-    .btn:disabled { opacity:.5; cursor:not-allowed; }
-    .shadow-elev { box-shadow: 0 15px 40px rgba(0,0,0,.08); }
-
-    /* Drawer nicer header gradient */
-    .hdr-grad { background: linear-gradient(135deg, #111827 0%, #1f2937 45%, var(--osu-orange) 120%); color:white; }
-
-    /* Settings popover */
-    .popover { position:absolute; right:.5rem; bottom:3.3rem; width: 260px; background:white; border:1px solid #e5e7eb; border-radius: .9rem; box-shadow:0 12px 32px rgba(0,0,0,.12); padding:.7rem; display:none; }
-    .toggle { display:flex; align-items:center; gap:.5rem; font-size:.9rem; padding:.45rem .55rem; border-radius:.6rem; }
-    .toggle:hover { background:#f9fafb; }
-
-    /* Sticky mini-cart bar inside drawer */
-    .drawer-cart { border-top:1px solid #e5e7eb; background:#fff; }
-
-    /* Compact scrollbar */
-    #chat-body::-webkit-scrollbar { width: 8px; }
-    #chat-body::-webkit-scrollbar-thumb { background:#e5e7eb; border-radius:999px; }
-
-    /* Order flow step dots */
-    .step-dot.active { background:#f59e0b }  /* amber */
-    .step-dot.done { background:#16a34a }    /* green */
-    .step-dot.error { background:#dc2626 }   /* red */
   </style>
 </head>
 <body class="bg-gradient-to-b from-amber-50 to-white text-gray-900">
@@ -87,8 +46,8 @@
           </div>
           <a href="/accounts/logout/" class="text-sm hover:text-orange-700">Sign out</a>
         {% else %}
-          <a href="{% provider_login_url 'google' %}" class="btn btn-ghost text-sm flex items-center">
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="" class="w-4 h-4 mr-2"/> Sign in
+          <a href="{% provider_login_url 'google' %}" class="text-sm px-3 py-2 rounded-xl border flex items-center">
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-4 h-4 mr-2" alt="">Sign in
           </a>
           <a href="/accounts/login/" class="text-sm hover:text-orange-700">Email login</a>
         {% endif %}
@@ -96,7 +55,7 @@
           🛒 <span id="cart-count" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-600 text-xs">0</span>
           <span class="hidden sm:inline">Cart</span>
         </a>
-        <a href="#picks" class="text-sm px-3 py-2 rounded-xl bg-orange-600 text-white hover:bg-orange-700">Browse menu</a>
+        <a href="/agent/" class="text-sm px-3 py-2 rounded-xl bg-orange-600 text-white hover:bg-orange-700">Open Agent</a>
       </div>
     </div>
   </header>
@@ -112,13 +71,13 @@
         <div class="grid md:grid-cols-2 gap-8 items-center">
           <div>
             <h1 class="text-3xl md:text-5xl font-extrabold leading-tight">
-              OSU Stillwater Dining. <span class="text-orange-600">Order your way.</span><br class="hidden md:block"/> Manual or Agent—your choice.
+              OSU Stillwater Dining. <span class="text-orange-600">Order your way.</span>
             </h1>
             <p class="mt-3 text-gray-700 md:text-lg">
-              Type your cravings or dietary needs. Our AI suggests dishes you'll love — then you checkout in a tap.
+              Browse the best dishes around campus — or launch the Agent to recommend and place orders for you.
             </p>
 
-            <!-- Quick chips -->
+            <!-- Simple keyword chips -->
             <div class="mt-4 flex flex-wrap gap-2">
               <button class="chip px-3 py-1 rounded-full bg-white border text-sm" data-chip="vegan">Vegan</button>
               <button class="chip px-3 py-1 rounded-full bg-white border text-sm" data-chip="spicy">Spicy</button>
@@ -127,16 +86,16 @@
               <button class="chip px-3 py-1 rounded-full bg-white border text-sm" data-chip="dessert">Dessert</button>
             </div>
 
-            <!-- Inline finder (manual) -->
+            <!-- Inline search -->
             <div class="mt-4 flex gap-2">
-              <input id="agent-input" class="flex-1 px-4 py-3 rounded-2xl border outline-none focus:ring-2 focus:ring-orange-500" placeholder="Try: ‘vegan spicy noodles’ or ‘under $12 bowls’"/>
-              <button id="agent-send" class="px-5 py-3 rounded-2xl bg-orange-600 text-white hover:bg-orange-700">Find my meal</button>
+              <input id="search-input" class="flex-1 px-4 py-3 rounded-2xl border outline-none focus:ring-2 focus:ring-orange-500" placeholder="Try: ‘spicy vegan’ or ‘under $12 bowls’"/>
+              <button id="search-btn" class="px-5 py-3 rounded-2xl bg-orange-600 text-white hover:bg-orange-700">Search</button>
             </div>
 
             {% if not user.is_authenticated %}
             <div class="mt-4 flex items-center gap-3 text-sm">
-              <a href="{% provider_login_url 'google' %}" class="btn btn-ghost flex items-center">
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-4 h-4 mr-2"/> Continue with Google
+              <a href="{% provider_login_url 'google' %}" class="inline-flex items-center px-4 py-2 rounded-xl border bg-white hover:bg-gray-50">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-4 h-4 mr-2" alt=""> Continue with Google
               </a>
               <a href="/accounts/signup/" class="underline">or create an account</a>
             </div>
@@ -157,7 +116,7 @@
         </div>
 
         <!-- Inline results -->
-        <div id="agent-results" class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <div id="results" class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </div>
     </div>
   </section>
@@ -179,6 +138,7 @@
         <h2 class="text-2xl md:text-3xl font-bold">Recommended for you</h2>
         <div class="flex items-center gap-2">
           <button id="refresh-recs" class="text-sm underline">Refresh</button>
+          <a href="/agent/" class="text-sm px-3 py-1 rounded-xl bg-black text-white">Try Agent</a>
         </div>
       </div>
       <div id="recs" class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
@@ -196,11 +156,11 @@
         </details>
         <details class="bg-orange-50/60 rounded-xl p-4 border">
           <summary class="font-semibold cursor-pointer">Can I filter by dietary needs?</summary>
-          <p class="mt-2 text-sm text-gray-700">Yes — vegan, vegetarian, halal, gluten-free, low-carb and more. Type them or tap the chips.</p>
+          <p class="mt-2 text-sm text-gray-700">Yes — vegan, vegetarian, halal, gluten-free, low-carb and more.</p>
         </details>
         <details class="bg-orange-50/60 rounded-xl p-4 border">
           <summary class="font-semibold cursor-pointer">Is checkout secure?</summary>
-          <p class="mt-2 text-sm text-gray-700">Payments are via industry providers using HTTPS + PCI compliant flows.</p>
+          <p class="mt-2 text-sm text-gray-700">Payments use HTTPS + PCI compliant flows.</p>
         </details>
       </div>
     </div>
@@ -242,104 +202,17 @@
     <div class="max-w-6xl mx-auto px-4 mt-8 text-xs text-gray-500">©️ <span id="yr"></span> OSU Dining. All rights reserved.</div>
   </footer>
 
-  <!-- ===== Assistant Drawer ===== -->
-  <div id="chat-backdrop" class="fixed inset-0 bg-black/30 opacity-0 pointer-events-none transition-opacity duration-200 z-[60] hidden md:block"></div>
-
-  <button id="chat-open"
-          class="fixed bottom-5 right-5 z-[70] px-4 py-3 rounded-2xl bg-black text-white shadow-elev flex items-center gap-2"
-          aria-label="Open chat">
-    <span class="inline-flex w-2 h-2 rounded-full bg-green-500"></span>
-    OSU Dining Assistant
-  </button>
-
-  <aside id="chat-drawer"
-         class="fixed inset-y-0 right-0 w-full md:w-[460px] bg-white shadow-2xl border-l z-[80] translate-x-full transition-transform duration-300">
-    <!-- Header -->
-    <div class="hdr-grad h-16 px-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="font-bold text-lg">Dining Assistant</div>
-        <span class="inline-flex items-center gap-1 text-xs opacity-90">
-          <span class="inline-block w-2 h-2 rounded-full bg-green-400"></span> online
-        </span>
-      </div>
-      <div class="relative">
-        <button id="chat-settings" class="px-2 py-1 rounded-md bg-white/10 hover:bg-white/20">⚙️</button>
-        <div id="settings-pop" class="popover">
-          <div class="font-semibold mb-2 text-sm">Assistant options</div>
-          <label class="toggle"><input type="checkbox" id="auto-order"> Auto-order best match</label>
-          <label class="toggle"><input type="checkbox" id="speak-replies"> 🔊 Speak replies</label>
-          <div class="mt-2 text-xs text-gray-500">Auto-order will add the top result and start checkout (only if you’re signed in).</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Body -->
-    <div id="chat-body" class="flex-1 h-[calc(100vh-64px-88px-56px)] overflow-y-auto p-3">
-      <div class="p-1">
-        <div class="bubble bubble-bot inline-block">
-          Hi! Tell me what you’re craving (e.g., “spicy vegan”, “under $12 bowls”). Say “order” to add.
-        </div>
-      </div>
-      <div class="px-1 pb-2">
-        <div class="flex flex-wrap gap-2">
-          <button data-q="Recommend spicy vegan dishes" class="qchip px-3 py-1 rounded-full bg-white border text-sm">Spicy vegan dishes</button>
-          <button data-q="Under $12 lunch bowls" class="qchip px-3 py-1 rounded-full bg-white border text-sm">Under $12 bowls</button>
-          <button data-q="High-protein options" class="qchip px-3 py-1 rounded-full bg-white border text-sm">High-protein</button>
-          <button data-q="Gluten-free pizza" class="qchip px-3 py-1 rounded-full bg-white border text-sm">Gluten-free pizza</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Composer -->
-    <div class="h-22 border-t bg-white px-3 py-2 flex items-center gap-2">
-      <button type="button" id="mic-btn" class="px-3 py-2 rounded-xl border" title="Voice input">🎙️</button>
-      <input id="chat-input" class="flex-1 border rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500" placeholder="Type or use the mic…" autocomplete="off"/>
-      <button id="chat-send" class="btn btn-orange">Send</button>
-      <button id="chat-close" class="px-2 py-2 rounded-md border" aria-label="Close chat">✕</button>
-    </div>
-
-    <!-- Drawer mini-cart -->
-    <div class="drawer-cart px-3 py-3 flex items-center justify-between gap-2">
-      <div class="text-sm">
-        <span id="mini-cart-count" class="font-semibold">0</span> items in cart
-      </div>
-      <div class="flex items-center gap-2">
-        <a href="/cart/" class="btn btn-ghost">View cart</a>
-        <button id="drawer-checkout" class="btn btn-dark">Checkout</button>
-      </div>
-    </div>
-  </aside>
-
-  <!-- JSON-LD (optional) -->
-  <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"WebSite","name":"OSU Dining","url":"https://example.com",
-   "potentialAction":{"@type":"SearchAction","target":"https://example.com/?q={search_term}","query-input":"required name=search_term"}}
-  </script>
-
   <script>
-    // ---------- Helpers ----------
-    function getCookie(name){
-      return document.cookie.split('; ').find(r => r.startsWith(name+'='))?.split('=')[1];
-    }
+    function getCookie(name){ return document.cookie.split('; ').find(r => r.startsWith(name+'='))?.split('=')[1]; }
     const csrftoken = getCookie('csrftoken');
 
     const recsRoot = document.getElementById('recs');
-    const agentResults = document.getElementById('agent-results');
+    const resultsRoot = document.getElementById('results');
     const cartCount = document.getElementById('cart-count');
-    const miniCartCount = document.getElementById('mini-cart-count');
     document.getElementById('yr').textContent = new Date().getFullYear();
 
-    const fmt = (n) => Number(n).toFixed(2);
+    const fmt = (n)=>Number(n).toFixed(2);
 
-    function toast(msg){
-      const el = document.createElement('div');
-      el.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-xl shadow-elev';
-      el.textContent = msg;
-      document.body.appendChild(el);
-      setTimeout(()=> el.remove(), 1600);
-    }
-
-    // ---------- Cards ----------
     function cardHTML(x){
       const tags = (x.tags||[]).map(t=>`<span class="text-[11px] bg-gray-100 px-2 py-[3px] rounded-full">${t.name}</span>`).join('');
       return `
@@ -349,41 +222,39 @@
               <div class="font-semibold text-lg">${x.name}</div>
               <div class="text-sm text-gray-500">$${fmt(x.price)}</div>
             </div>
-            <button class="text-xs px-3 py-1 rounded-xl bg-black text-white" onclick="addToCart(${x.id})">Add</button>
+            <button class="text-xs px-3 py-1 rounded-xl bg-black text-white" data-add="${x.id}">Add</button>
           </div>
           <p class="text-sm text-gray-700 mt-2">${x.description ?? ''}</p>
           <div class="flex flex-wrap gap-1 mt-3">${tags}</div>
         </div>`;
     }
-    function renderCards(root, items){ root.innerHTML = items.map(cardHTML).join(''); }
-
-    // Inline section “Find my meal”
-    document.querySelectorAll('.chip').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const input = document.getElementById('agent-input');
-        const w = btn.getAttribute('data-chip');
-        input.value = (input.value ? input.value + ' ' : '') + w;
-        input.focus();
-      });
-    });
-    document.getElementById('agent-send').onclick = async () => {
-      const msg = document.getElementById('agent-input').value.trim();
-      if (!msg) return;
-      try {
-        const r = await fetch('/api/agent/', {
-          method:'POST',
-          headers:{'Content-Type':'application/json','X-CSRFToken': csrftoken},
-          credentials:'same-origin',
-          body: JSON.stringify({ message: msg })
+    function renderCards(root, items){
+      root.innerHTML = items.map(cardHTML).join('');
+      root.querySelectorAll('[data-add]').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          btn.disabled = true;
+          try{
+            await fetch('/api/cart/', {
+              method:'POST',
+              headers:{'Content-Type':'application/json','X-CSRFToken': csrftoken},
+              credentials:'same-origin',
+              body: JSON.stringify({menu_item:Number(btn.dataset.add), qty:1})
+            });
+            refreshCartCount();
+          } finally { setTimeout(()=>btn.disabled=false,600); }
         });
-        if (!r.ok){ console.error('Agent error', await r.text()); alert('Agent error'); return; }
-        const j = await r.json();
-        renderCards(agentResults, j.suggestions || []);
-        agentResults.scrollIntoView({behavior:'smooth', block:'start'});
-      } catch(e){ console.error(e); alert('Network error.'); }
-    };
+      });
+    }
 
-    // ---------- Recommendations & Cart ----------
+    async function refreshCartCount(){
+      try{
+        const r = await fetch('/api/cart/', {credentials:'same-origin'});
+        const j = await r.json();
+        const n = (j.items||[]).reduce((s, it)=> s + (it.qty||0), 0);
+        cartCount.textContent = n;
+      } catch(e){ console.error(e); }
+    }
+
     async function loadRecs(){
       try{
         const r = await fetch('/api/recommendations/', {credentials:'same-origin'});
@@ -391,402 +262,23 @@
         renderCards(recsRoot, j.results || []);
       } catch(e){ console.error(e); }
     }
-    async function refreshCartCount(){
-      try{
-        const r = await fetch('/api/cart/', {credentials:'same-origin'});
-        const j = await r.json();
-        const n = (j.items||[]).reduce((s, it)=> s + (it.qty||0), 0);
-        cartCount.textContent = n;
-        miniCartCount.textContent = n;
-      } catch(e){ console.error(e); }
-    }
-    async function addToCart(id){
-      try{
-        await fetch('/api/cart/', {
-          method:'POST',
-          headers:{'Content-Type':'application/json','X-CSRFToken': csrftoken},
-          credentials:'same-origin',
-          body: JSON.stringify({menu_item:id, qty:1})
-        });
-        refreshCartCount();
-        toast('Added to cart');
-      } catch(e){ console.error(e); toast('Error adding to cart'); }
-    }
-    window.addToCart = addToCart;
 
-    async function gotoCheckout(){
-      try{
-        const r = await fetch('/api/create-checkout-session/', {
-          method:'POST',
-          headers:{'Content-Type':'application/json','X-CSRFToken': csrftoken},
-          credentials:'same-origin',
-          body: JSON.stringify({})
-        });
-        const txt = await r.text();
-        let j = {}; try{ j = txt ? JSON.parse(txt) : {}; }catch{}
-        if (r.status === 401){
-          showLoginPrompt();
-          return;
-        }
-        if (!r.ok || !j.checkout_url){ toast('Unable to start checkout'); return; }
-        window.location.href = j.checkout_url;
-      } catch(e){ console.error(e); toast('Checkout failed'); }
-    }
-
-    // ---------- Assistant Drawer ----------
-    const chatOpenBtn   = document.getElementById('chat-open');
-    const chatCloseBtn  = document.getElementById('chat-close');
-    const chatDrawer    = document.getElementById('chat-drawer');
-    const chatBackdrop  = document.getElementById('chat-backdrop');
-    const chatBody      = document.getElementById('chat-body');
-    const chatInput     = document.getElementById('chat-input');
-    const chatSend      = document.getElementById('chat-send');
-    const settingsBtn   = document.getElementById('chat-settings');
-    const settingsPop   = document.getElementById('settings-pop');
-    const autoOrderEl   = document.getElementById('auto-order');
-    const speakEl       = document.getElementById('speak-replies');
-    const micBtn        = document.getElementById('mic-btn');
-    const drawerCheckout= document.getElementById('drawer-checkout');
-
-    function openChat(){
-      chatDrawer.classList.remove('translate-x-full');
-      if (chatBackdrop){
-        chatBackdrop.classList.remove('hidden');
-        requestAnimationFrame(()=> {
-          chatBackdrop.classList.remove('pointer-events-none');
-          chatBackdrop.style.opacity = '1';
-        });
-      }
-      setTimeout(()=> chatInput?.focus(), 200);
-    }
-    function closeChat(){
-      chatDrawer.classList.add('translate-x-full');
-      if (chatBackdrop){
-        chatBackdrop.style.opacity = '0';
-        chatBackdrop.classList.add('pointer-events-none');
-        setTimeout(()=> chatBackdrop.classList.add('hidden'), 180);
-      }
-      settingsPop.style.display = 'none';
-    }
-    chatOpenBtn.addEventListener('click', openChat);
-    chatCloseBtn.addEventListener('click', closeChat);
-    if (chatBackdrop) chatBackdrop.addEventListener('click', closeChat);
-
-    settingsBtn.addEventListener('click', ()=>{
-      settingsPop.style.display = (settingsPop.style.display === 'block') ? 'none' : 'block';
-    });
-    document.addEventListener('click', (e)=>{
-      if (!settingsPop.contains(e.target) && !settingsBtn.contains(e.target)){
-        settingsPop.style.display = 'none';
-      }
-    });
-
-    // Typing indicator
-    function showTyping(){
-      const wrap = document.createElement('div');
-      wrap.className = 'p-2';
-      wrap.id = 'typing';
-      wrap.innerHTML = `<div class="bubble bubble-bot inline-block"><span class="typing"><i></i><i></i><i></i></span></div>`;
-      chatBody.appendChild(wrap);
-      chatBody.scrollTop = chatBody.scrollHeight;
-    }
-    function hideTyping(){
-      document.getElementById('typing')?.remove();
-    }
-
-    function pushMsg(role, text){
-      const wrap = document.createElement('div');
-      wrap.className = 'p-2 ' + (role === 'user' ? 'text-right' : 'text-left');
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble ' + (role === 'user' ? 'bubble-user' : 'bubble-bot');
-      bubble.textContent = text;
-      wrap.appendChild(bubble);
-      chatBody.appendChild(wrap);
-      chatBody.scrollTop = chatBody.scrollHeight;
-      if (role === 'bot') speak(text);
-    }
-
-    // Voice In / TTS
-    function speak(text){
-      try{ if (!speakEl.checked) return;
-        const u = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
-      }catch(_){}
-    }
-    let rec = null, listening = false;
-    function initRec(){
-      const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!Ctor) return null;
-      const r = new Ctor();
-      r.lang='en-US'; r.continuous=false; r.interimResults=false;
-      r.onresult = (ev)=>{ const t = ev.results?.[0]?.[0]?.transcript; if (t){ chatInput.value=t; chatSend.click(); } };
-      r.onend = ()=>{ listening=false; micBtn.textContent='🎙️'; };
-      return r;
-    }
-    micBtn.addEventListener('click', ()=>{
-      if (!rec) rec = initRec();
-      if (!rec){ alert('Voice input not supported by this browser.'); return; }
-      if (!listening){ listening = true; micBtn.textContent='⏹️'; rec.start(); } else { rec.stop(); }
-    });
-
-    // Suggestion chips fill
-    document.querySelectorAll('.qchip').forEach(btn=>{
+    document.querySelectorAll('.chip').forEach(btn=>{
       btn.addEventListener('click', ()=>{
-        chatInput.value = btn.getAttribute('data-q');
-        chatInput.focus();
+        const input = document.getElementById('search-input');
+        input.value = (input.value ? input.value + ' ' : '') + btn.dataset.chip;
+        input.focus();
       });
     });
+    document.getElementById('search-btn').addEventListener('click', async ()=>{
+      const q = document.getElementById('search-input').value.trim();
+      const r = await fetch('/api/recommendations/?q='+encodeURIComponent(q));
+      const j = await r.json();
+      renderCards(resultsRoot, j.results || []);
+      resultsRoot.scrollIntoView({behavior:'smooth', block:'start'});
+    });
 
-    // Render suggestion cards inside chat
-    function renderSuggestionList(items, { readOnly = false } = {}){
-      if (!items?.length) return;
-      const wrap = document.createElement('div');
-      wrap.className = 'p-2 text-left';
-      const grid = document.createElement('div');
-      grid.className = 'grid gap-2';
-
-      items.forEach(x=>{
-        const el = document.createElement('div');
-        el.className = 'item-pill flex items-center justify-between';
-        el.innerHTML = `
-          <div>
-            <div class="font-semibold">${x.name}</div>
-            <div class="text-xs text-gray-500">$${Number(x.price).toFixed(2)}</div>
-          </div>
-          <div class="flex items-center gap-2">
-            <button class="btn btn-ghost text-xs" data-view="${x.id}">Details</button>
-            ${readOnly ? '' : `<button class="btn btn-dark text-xs" data-add="${x.id}">Add</button>`}
-          </div>`;
-        grid.appendChild(el);
-      });
-
-      wrap.appendChild(grid);
-      chatBody.appendChild(wrap);
-      chatBody.scrollTop = chatBody.scrollHeight;
-
-      if (!readOnly){
-        // Prevent double-click adds
-        wrap.querySelectorAll('[data-add]').forEach(b=>{
-          b.addEventListener('click', async ()=>{
-            if (b.disabled) return;
-            b.disabled = true;
-            try {
-              const id = Number(b.getAttribute('data-add'));
-              await addToCart(id);
-              pushMsg('bot','Added to cart.');
-            } finally {
-              setTimeout(()=> b.disabled = false, 800);
-            }
-          });
-        });
-      }
-    }
-
-    function showLoginPrompt(){
-      const wrap = document.createElement('div');
-      wrap.className = 'p-2 text-left';
-      wrap.innerHTML = `
-        <div class="card bg-white rounded-xl border p-3">
-          <div class="font-semibold mb-1">Sign in to continue</div>
-          <div class="text-sm text-gray-600 mb-2">You need to be logged in to pay.</div>
-          <div class="flex gap-2">
-            <a href="/accounts/google/login/?process=login&next=/cart/" class="btn btn-ghost flex items-center">
-              <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-4 h-4 mr-2"/> Google
-            </a>
-            <a href="/accounts/login/?next=/cart/" class="btn btn-dark">Email login</a>
-          </div>
-        </div>`;
-      chatBody.appendChild(wrap);
-      chatBody.scrollTop = chatBody.scrollHeight;
-    }
-
-    function wantsOrder(msg){
-      return /\b(order now|place order|checkout|confirm order|confirm|order)\b/i.test(msg.trim());
-    }
-
-    async function callAgent(url, message){
-      const r = await fetch(url, {
-        method:'POST',
-        headers:{'Content-Type':'application/json','X-CSRFToken': csrftoken},
-        credentials:'same-origin',
-        body: JSON.stringify({ message })
-      });
-      const text = await r.text();
-      let j = {}; try{ j = text ? JSON.parse(text) : {}; }catch{}
-      return { r, j, text };
-    }
-
-    // -------- Order Flow UI (modal) --------
-    const flowEl      = document.getElementById('flow');
-    const flowClose   = document.getElementById('flow-close');
-    const stepAddDot  = document.querySelector('#flow-step-add .step-dot');
-    const stepPayDot  = document.querySelector('#flow-step-pay .step-dot');
-    const stepGoDot   = document.querySelector('#flow-step-redirect .step-dot');
-    const flowLogin   = document.getElementById('flow-login');
-    const flowErr     = document.getElementById('flow-error');
-
-    function flowReset(){
-      [stepAddDot, stepPayDot, stepGoDot].forEach(el=>{
-        if(!el) return;
-        el.className = 'step-dot w-2 h-2 rounded-full bg-gray-300';
-      });
-      if (flowErr){ flowErr.classList.add('hidden'); flowErr.textContent=''; }
-      flowLogin?.classList.add('hidden');
-    }
-    function flowOpen(){ flowReset(); flowEl?.classList.remove('hidden'); }
-    function flowHide(){ flowEl?.classList.add('hidden'); }
-    flowClose?.addEventListener('click', flowHide);
-
-    function stepState(dot, state){
-      if(!dot) return;
-      dot.classList.remove('active','done','error','bg-gray-300');
-      if(state==='active') dot.classList.add('active');
-      if(state==='done')   dot.classList.add('done');
-      if(state==='error')  dot.classList.add('error');
-    }
-    function showFlowError(msg){
-      if(flowErr){ flowErr.textContent = msg; flowErr.classList.remove('hidden'); }
-    }
-    function requireLoginInFlow(){
-      stepState(stepPayDot,'error');
-      flowLogin?.classList.remove('hidden');
-    }
-
-    // -------- Chat handling --------
-    let inFlight = false;
-
-    async function handleChatSend(){
-      if (inFlight) return;
-      const msg = (chatInput.value || '').trim();
-      if (!msg) return;
-
-      pushMsg('user', msg);
-      chatInput.value = '';
-
-      const orderingFlow = document.getElementById('auto-order').checked || wantsOrder(msg);
-      const url = orderingFlow ? '/api/agent/order/' : '/api/agent/';
-
-      showTyping();
-      inFlight = true;
-
-      try {
-        if (orderingFlow){
-          // Start flow UI
-          flowOpen();
-          stepState(stepAddDot,'active');
-
-          // 1) Add via agent/order
-          const addResp = await fetch(url, {
-            method:'POST',
-            headers:{'Content-Type':'application/json','X-CSRFToken': csrftoken},
-            credentials:'same-origin',
-            body: JSON.stringify({ message: msg })
-          });
-          const addText = await addResp.text();
-          let addJson = {}; try{ addJson = addText ? JSON.parse(addText) : {}; }catch{}
-
-          hideTyping();
-
-          if (addResp.status === 401 || addJson.require_login){
-            stepState(stepAddDot,'done');
-            requireLoginInFlow();
-            pushMsg('bot','Please sign in to continue to payment.');
-            refreshCartCount();
-            return;
-          }
-          if (!addResp.ok){
-            stepState(stepAddDot,'error');
-            showFlowError('Could not add items. Please try again.');
-            pushMsg('bot','Sorry—something went wrong adding items.');
-            return;
-          }
-          stepState(stepAddDot,'done');
-
-          if (addJson.added?.length){
-            const s = addJson.added.map(x=>`• ${x.name}`).join('\n');
-            pushMsg('bot', `Added to cart:\n${s}`);
-          }
-          if (addJson.suggestions?.length){
-            pushMsg('bot','You might also like (not added):');
-            renderSuggestionList(addJson.suggestions, { readOnly: true });
-          }
-
-          // If backend already gave a checkout URL, go
-          if (addJson.checkout_url){
-            stepState(stepPayDot,'done');
-            stepState(stepGoDot,'active');
-            window.location.href = addJson.checkout_url;
-            return;
-          }
-
-          // 2) Otherwise create checkout session
-          stepState(stepPayDot,'active');
-          const payResp = await fetch('/api/create-checkout-session/', {
-            method:'POST',
-            headers:{'Content-Type':'application/json','X-CSRFToken': csrftoken},
-            credentials:'same-origin',
-            body: JSON.stringify({})
-          });
-          const payText = await payResp.text();
-          let payJson = {}; try{ payJson = payText ? JSON.parse(payText) : {}; }catch{}
-
-          if (payResp.status === 401){
-            requireLoginInFlow();
-            pushMsg('bot','Please sign in to proceed to payment.');
-            refreshCartCount();
-            return;
-          }
-          if (!payResp.ok || !payJson.checkout_url){
-            stepState(stepPayDot,'error');
-            showFlowError(payJson.error || 'Could not create payment session.');
-            pushMsg('bot','Payment couldn’t be started. Try again.');
-            return;
-          }
-          stepState(stepPayDot,'done');
-          stepState(stepGoDot,'active');
-          window.location.href = payJson.checkout_url;
-          return;
-        }
-
-        // -------- Suggestion (not ordering) path --------
-        const r = await fetch(url, {
-          method:'POST',
-          headers:{'Content-Type':'application/json','X-CSRFToken': csrftoken},
-          credentials:'same-origin',
-          body: JSON.stringify({ message: msg })
-        });
-        const text = await r.text();
-        let j = {}; try { j = text ? JSON.parse(text) : {}; } catch {}
-        hideTyping();
-
-        if (!r.ok){
-          pushMsg('bot','Sorry—something went wrong.');
-          return;
-        }
-        if (j.suggestions?.length){
-          pushMsg('bot', 'You might like these:');
-          renderSuggestionList(j.suggestions, { readOnly: false });
-        } else {
-          pushMsg('bot', j.reply || "Tell me a flavor, diet, or price range and I’ll suggest dishes.");
-        }
-        if (j.follow_up) pushMsg('bot', j.follow_up);
-        refreshCartCount();
-      } catch (err){
-        hideTyping();
-        console.error(err);
-        pushMsg('bot','Network error. Please try again.');
-      } finally {
-        setTimeout(()=>{ inFlight = false; }, 600);
-      }
-    }
-
-    document.getElementById('chat-send').addEventListener('click', handleChatSend);
-    document.getElementById('chat-input').addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleChatSend(); } });
-
-    // Drawer actions
-    document.getElementById('drawer-checkout').addEventListener('click', gotoCheckout);
-
-    // Init slider + data
+    // Simple hero slider
     (function(){
       const SLIDES = [
         "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1000&auto=format&fit=crop",
@@ -794,68 +286,17 @@
         "https://images.unsplash.com/photo-1533777324565-a040eb52fac1?q=80&w=1000&auto=format&fit=crop",
         "https://images.unsplash.com/photo-1551218808-94e220e084d2?q=80&w=1000&auto=format&fit=crop"
       ];
-      const slideImg = document.getElementById('hero-slide');
-      let si = 0, timer = null;
-      function safeSet(src){ slideImg.style.opacity=.25; slideImg.onerror=()=>{ next(true) }; slideImg.onload=()=>{ slideImg.style.opacity=1 }; slideImg.src=src; }
-      function next(skip=false){ si=(si+1)%SLIDES.length; safeSet(SLIDES[si]); if(!skip){ if(timer) clearInterval(timer); timer=setInterval(next, 4000);} }
-      safeSet(SLIDES[si]); timer=setInterval(next, 4000);
+      const img = document.getElementById('hero-slide');
+      let i = 0;
+      function set(src){ img.style.opacity=.25; img.onerror=()=>{next(true)}; img.onload=()=>{img.style.opacity=1}; img.src=src; }
+      function next(skip=false){ i=(i+1)%SLIDES.length; set(SLIDES[i]); if(!skip){ clearInterval(timer); timer=setInterval(next,4000);} }
+      set(SLIDES[i]);
+      var timer = setInterval(next, 4000);
     })();
 
-    // Buttons
-    document.getElementById('refresh-recs')?.addEventListener('click', loadRecs);
-    document.querySelectorAll('.qchip').forEach(btn=>{
-      btn.addEventListener('click', ()=>{ chatInput.value = btn.getAttribute('data-q'); chatInput.focus(); });
-    });
-
-    // Page init
+    // Init
     loadRecs();
     refreshCartCount();
   </script>
-
-  <!-- Order Progress Modal -->
-  <div id="flow" class="fixed inset-0 z-[90] hidden">
-    <div class="absolute inset-0 bg-black/40"></div>
-    <div class="relative max-w-md mx-auto mt-24 bg-white rounded-2xl shadow-2xl border">
-      <div class="p-4 border-b flex items-center justify-between">
-        <div class="font-semibold">Placing your order…</div>
-        <button id="flow-close" class="text-gray-500 hover:text-black">✕</button>
-      </div>
-      <div class="p-4">
-        <ol class="space-y-3 text-sm">
-          <li id="flow-step-add" class="flex items-center gap-2">
-            <span class="step-dot w-2 h-2 rounded-full bg-gray-300"></span>
-            Adding items to cart
-          </li>
-          <li id="flow-step-pay" class="flex items-center gap-2">
-            <span class="step-dot w-2 h-2 rounded-full bg-gray-300"></span>
-            Creating secure payment
-          </li>
-          <li id="flow-step-redirect" class="flex items-center gap-2">
-            <span class="step-dot w-2 h-2 rounded-full bg-gray-300"></span>
-            Redirecting to checkout
-          </li>
-        </ol>
-        <ul id="flow-items" class="mt-3 text-sm text-gray-700 space-y-1"></ul>
-        <div id="flow-login" class="mt-4 hidden">
-          <div class="text-sm text-gray-700">
-            You need to sign in before paying.
-          </div>
-          <div class="mt-2 flex items-center gap-2">
-            <a href="{% provider_login_url 'google' %}"
-               class="inline-flex items-center px-3 py-2 rounded-xl border">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="16" height="16" class="mr-2"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12 c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.24,6.053,28.824,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657 C33.24,6.053,28.824,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.197l-6.191-5.238C29.211,35.091,26.715,36,24,36 c-5.202,0-9.619-3.317-11.282-7.946l-6.493,5.006C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-3.994,5.565c0.001-0.001,0.002-0.001,0.003-0.002 l6.191,5.238C36.94,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
-              Continue with Google
-            </a>
-            <a href="/accounts/login/" class="text-sm underline">Use email</a>
-          </div>
-        </div>
-
-        <div id="flow-error" class="mt-3 text-sm text-red-600 hidden"></div>
-        <div class="mt-4 text-xs text-gray-500">
-          Don’t close this window—your payment opens in a moment.
-        </div>
-      </div>
-    </div>
-  </div>
 </body>
 </html>

@@ -22,6 +22,11 @@ def get_guest_token(request):
 def landing(request):
     return render(request, 'landing.html')
 
+
+@ensure_csrf_cookie
+def agent_page(request):
+    return render(request, 'agent.html')
+
 class RecommendationAPI(APIView):
     def get(self, request):
         guest_token = get_guest_token(request)
