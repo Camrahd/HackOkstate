@@ -1,0 +1,12 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env
+.git
+.gitignore
+db.sqlite3
+venv/
+node_modules/
+staticfiles/
+media/
