@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets
 from django.shortcuts import render
 from django.db.models import F
+
+from .websearch import search_places
 from .agent import parse_message, search_candidates, rank
 from .models import MenuItem, Cart, CartItem, EventLog
 from .serializers import MenuItemSerializer, CartSerializer, CartItemCreateSerializer
@@ -26,6 +28,10 @@ def landing(request):
 @ensure_csrf_cookie
 def agent_page(request):
     return render(request, 'agent.html')
+
+@ensure_csrf_cookie
+def websearch_page(request):
+    return render(request, "websearch.html")
 
 class RecommendationAPI(APIView):
     def get(self, request):
@@ -134,3 +140,55 @@ class AgentOrderAPI(APIView):
             out.update({"error": str(e)})
 
         return Response(out)
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from .websearch import search_places
+
+class WebSearchAPI(APIView):
+    permission_classes = [AllowAny]  # allow anonymous discovery
+
+    def post(self, request, *args, **kwargs):
+        data = request.data or {}
+        prompt = (data.get("prompt") or "").strip()
+
+        # required lat/lng
+        try:
+            lat = float(data.get("lat"))
+            lng = float(data.get("lng"))
+        except (TypeError, ValueError):
+            return Response({"error": "lat and lng are required floats"}, status=400)
+
+        # optional filters
+        radius = int(data.get("radius") or 2000)
+        budget = data.get("budget")
+        try:
+            budget = int(budget) if str(budget).strip() != "" and budget is not None else None
+        except (TypeError, ValueError):
+            budget = None
+
+        open_now = bool(data.get("open_now")) if "open_now" in data else None
+        healthy  = bool(data.get("healthy"))  if "healthy"  in data else None
+
+        # call your search helper
+        from .websearch import search_places
+
+        try:
+            # Preferred signature: (query, lat, lng, radius=..., open_now=..., budget=..., healthy=...)
+            results = search_places(
+    prompt=prompt,
+    lat=lat,
+    lng=lng,
+    open_now=open_now,
+    budget=budget,
+    radius=radius,
+)
+        except TypeError:
+            # If your local function is older and doesn’t accept healthy
+            results = search_places(prompt, lat, lng,
+                                    radius=radius, open_now=open_now,
+                                    budget=budget)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+        return Response(results)

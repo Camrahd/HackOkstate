@@ -1,0 +1,297 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Find Nearby Restaurants • OSU Dining</title>
+  <meta name="description" content="Search nearby restaurants by mood, healthiness, budget, and distance."/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="{% static 'favicon.ico' %}"/>
+  <style>
+    :root{ --osu-orange:#f97316; --ink:#0b0b0b; }
+    .card { transition: transform .15s ease, box-shadow .15s ease; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,.08); }
+    .chip { border:1px solid #e5e7eb; background:#fff; padding:.35rem .7rem; border-radius:999px; font-size:.85rem; }
+    .chip.active { background:#111827; color:#fff; border-color:#111827; }
+    .btn { border-radius:.9rem; padding:.6rem .9rem; }
+    .btn-dark{ background:#111827; color:#fff; }
+    .btn-ghost{ background:white; border:1px solid #e5e7eb; }
+    .glass { backdrop-filter: blur(10px); background: rgba(255,255,255,.7); }
+    .skeleton{ position:relative; overflow:hidden; background:#f3f4f6 }
+    .skeleton:after{ content:''; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); animation:shimmer 1.4s infinite; }
+    @keyframes shimmer{ 100%{ transform:translateX(100%); } }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-amber-50 to-white text-gray-900">
+  <!-- HERO / HEADER -->
+  <header class="relative">
+    <div class="absolute inset-0 -z-10">
+      <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1600&auto=format&fit=crop" class="w-full h-[340px] object-cover" alt="">
+      <div class="absolute inset-0 bg-gradient-to-b from-black/40 to-black/10"></div>
+    </div>
+    <div class="max-w-6xl mx-auto px-4 pt-10 pb-6">
+      <div class="glass rounded-3xl p-5 md:p-7 shadow-elev">
+        <div class="flex items-center justify-between gap-3">
+          <a href="/" class="flex items-center gap-2 font-bold text-xl text-white">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-orange-600 text-white">🍽️</span>
+            OSU Dining
+          </a>
+          <div class="flex items-center gap-2">
+            <a href="/agent/" class="btn btn-ghost">Back to Agent</a>
+            <a href="/cart/" class="btn btn-dark">Cart</a>
+          </div>
+        </div>
+
+        <!-- Search bar -->
+        <div class="mt-5 bg-white rounded-2xl p-3 md:p-4 border">
+          <div class="flex flex-col md:flex-row md:items-center gap-3">
+            <div class="flex-1 flex items-center gap-2">
+              <span>🔎</span>
+              <input id="q" class="flex-1 outline-none" placeholder="Try: healthy thai open now, $$ ramen, vegan bowls near me"/>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="use-loc" class="btn btn-ghost">Use my location</button>
+              <button id="go" class="btn btn-dark">Search</button>
+            </div>
+          </div>
+
+          <!-- Filters row -->
+          <div class="mt-3 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+            <label class="flex items-center gap-2"><input id="open" type="checkbox"> Open now</label>
+            <label class="flex items-center gap-2">
+              Budget
+              <select id="budget" class="border rounded px-2 py-1 text-sm">
+                <option value="">Any</option>
+                <option value="1">$</option>
+                <option value="2">$$</option>
+                <option value="3">$$$</option>
+                <option value="4">$$$$</option>
+              </select>
+            </label>
+            <label class="flex items-center gap-2">
+              Radius
+              <select id="radius" class="border rounded px-2 py-1 text-sm">
+                <option value="1000">1 km</option>
+                <option value="2000" selected>2 km</option>
+                <option value="3000">3 km</option>
+                <option value="5000">5 km</option>
+                <option value="10000">10 km</option>
+              </select>
+            </label>
+            <label class="flex items-center gap-2">
+              Healthy priority
+              <input id="healthy" type="checkbox" class="ml-1">
+            </label>
+          </div>
+
+          <!-- Mood / cuisines chips -->
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button class="chip" data-chip="cozy">Cozy</button>
+            <button class="chip" data-chip="quick bite">Quick bite</button>
+            <button class="chip" data-chip="study friendly">Study-friendly</button>
+            <button class="chip" data-chip="date night">Date night</button>
+            <button class="chip" data-chip="high protein">High-protein</button>
+            <button class="chip" data-chip="vegan">Vegan</button>
+            <button class="chip" data-chip="thai">Thai</button>
+            <button class="chip" data-chip="ramen">Ramen</button>
+            <button class="chip" data-chip="pizza">Pizza</button>
+            <button class="chip" data-chip="mexican">Mexican</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- RESULTS -->
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div id="hint" class="text-sm text-gray-600"></div>
+    <div id="grid" class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+    <!-- skeletons -->
+    <template id="skel">
+      <div class="card bg-white rounded-2xl border overflow-hidden">
+        <div class="h-36 skeleton"></div>
+        <div class="p-3 space-y-2">
+          <div class="h-4 skeleton rounded"></div>
+          <div class="h-3 skeleton rounded w-2/3"></div>
+          <div class="h-3 skeleton rounded w-1/2"></div>
+          <div class="h-8 skeleton rounded mt-3"></div>
+        </div>
+      </div>
+    </template>
+  </main>
+
+  <!-- CTA -->
+  <section class="py-10">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="bg-gradient-to-r from-orange-100 to-white border rounded-2xl p-5 md:p-7 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <div class="font-bold text-xl">Didn’t find the perfect spot?</div>
+          <div class="text-sm text-gray-700 mt-1">Ask the Dining Agent for a curated pick based on your mood & diet.</div>
+        </div>
+        <a href="/agent/" class="btn btn-dark">Open Dining Agent</a>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Helpers
+    function getCookie(name){ return document.cookie.split('; ').find(r => r.startsWith(name+'='))?.split('=')[1]; }
+    const csrftoken = getCookie('csrftoken');
+
+    const FALLBACK_LOC = { lat: 36.1270, lng: -97.0737 }; // OSU Stillwater
+    let lastLoc = null;
+
+    const q       = document.getElementById('q');
+    const go      = document.getElementById('go');
+    const openNow = document.getElementById('open');
+    const budget  = document.getElementById('budget');
+    const radius  = document.getElementById('radius');
+    const healthy = document.getElementById('healthy');
+    const grid    = document.getElementById('grid');
+    const hint    = document.getElementById('hint');
+    const useLoc  = document.getElementById('use-loc');
+
+    // Chip handling -> append keywords to query
+    document.querySelectorAll('.chip').forEach(ch=>{
+      ch.addEventListener('click', ()=>{
+        ch.classList.toggle('active');
+        const word = ch.dataset.chip;
+        const parts = new Set((q.value || '').toLowerCase().split(/\s+/).filter(Boolean));
+        if (ch.classList.contains('active')) parts.add(word);
+        else parts.delete(word);
+        q.value = Array.from(parts).join(' ');
+        q.focus();
+      });
+    });
+
+    async function ensureLoc(){
+      if (lastLoc) return lastLoc;
+      return new Promise(resolve=>{
+        if (!navigator.geolocation){
+          lastLoc = FALLBACK_LOC; return resolve(lastLoc);
+        }
+        navigator.geolocation.getCurrentPosition(
+          pos => { lastLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude }; resolve(lastLoc); },
+          _   => { lastLoc = FALLBACK_LOC; resolve(lastLoc); },
+          { enableHighAccuracy:true, timeout:6000, maximumAge:300000 }
+        );
+      });
+    }
+
+    function showSkeletons(n=6){
+      grid.innerHTML = '';
+      const t = document.getElementById('skel');
+      for(let i=0;i<n;i++){ grid.appendChild(t.content.cloneNode(true)); }
+    }
+
+    function kmOrM(m){
+      if (m == null) return '';
+      return m >= 1000 ? (m/1000).toFixed(1)+' km' : m+' m';
+    }
+    function stars(r){
+      if (!r && r!==0) return '—';
+      return r.toFixed(1)+'★';
+    }
+    function price(p){ return p ? '$'.repeat(p) : ''; }
+
+    function cardHTML(p){
+      const photo = p.photo_url ? `<img src="${p.photo_url}" class="w-full h-40 object-cover" alt="">` : `<div class="h-40 bg-amber-100 grid place-items-center">🍽️</div>`;
+      const menus = (p.menus||[]).map(m=>`<a href="${m.url}" target="_blank" class="underline text-xs">${m.title||'Menu'}</a>`).join(' · ');
+      const dist  = kmOrM(p.distance_m);
+      const hl    = p.highlights ? `<div class="text-xs text-gray-600 mt-1">${p.highlights}</div>` : '';
+      return `
+        <div class="card bg-white rounded-2xl border overflow-hidden">
+          ${photo}
+          <div class="p-3">
+            <div class="flex items-center justify-between">
+              <div class="font-semibold">${p.name}</div>
+              <div class="text-xs text-gray-500">${stars(p.rating)} ${price(p.price_level)}</div>
+            </div>
+            <div class="text-xs text-gray-600">${p.address||''}</div>
+            <div class="text-[11px] text-gray-500 mt-1">${dist ? 'Distance: '+dist : ''}</div>
+            ${hl}
+            <div class="mt-3 flex items-center gap-2">
+              ${p.maps_url ? `<a href="${p.maps_url}" target="_blank" class="btn btn-ghost text-xs">Open in Maps</a>` : ''}
+              ${p.menus?.[0]?.url ? `<a href="${p.menus[0].url}" target="_blank" class="btn btn-dark text-xs">View Menu</a>` : ''}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    async function runSearch(){
+      const loc = await ensureLoc();
+      const payload = {
+        prompt: q.value.trim(),
+        lat: loc.lat, lng: loc.lng,
+        open_now: openNow.checked || undefined,
+        budget: budget.value ? Number(budget.value) : undefined,
+        radius: radius.value ? Number(radius.value) : undefined,
+        healthy: healthy.checked || undefined
+      };
+
+      hint.textContent = 'Searching nearby places…';
+      showSkeletons();
+
+      try{
+        const r = await fetch('/api/websearch/', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','X-CSRFToken': getCookie('csrftoken')},
+          credentials:'same-origin',
+          body: JSON.stringify(payload)
+        });
+        const txt = await r.text(); let j={}; try{ j = txt ? JSON.parse(txt) : {}; }catch{}
+        grid.innerHTML = '';
+
+        if (!r.ok || !j.results){
+          hint.textContent = j.error || 'Search failed. Please try again.';
+          return;
+        }
+
+        // Top hint line (intent)
+        const intent = j.intent || {};
+        const chips = [];
+        if (intent.mood) chips.push(`mood: ${intent.mood}`);
+        if (intent.healthy || healthy.checked) chips.push('healthy');
+        if ((intent.cuisines||[]).length) chips.push(`cuisine: ${(intent.cuisines||[]).join(', ')}`);
+        hint.textContent = `Results for “${j.keyword || q.value || 'nearby'}”${chips.length ? ' • '+chips.join(' · ') : ''}`;
+
+        if (!j.results.length){
+          grid.innerHTML = `<div class="text-sm text-gray-600">No matches. Try a different cuisine, broaden your radius, or uncheck filters.</div>`;
+          return;
+        }
+
+        // Sort by rating desc then distance asc (already handled server-side for Google; this is a safe UX)
+        j.results.forEach(p=>{
+          const div = document.createElement('div');
+          div.innerHTML = cardHTML(p);
+          grid.appendChild(div.firstElementChild);
+        });
+      }catch(err){
+        console.error(err);
+        hint.textContent = 'Network error. Please try again.';
+        grid.innerHTML = '';
+      }
+    }
+
+    async function useLocationNow(){
+      lastLoc = null;
+      await ensureLoc();
+      const s = lastLoc ? `Using location: ${lastLoc.lat.toFixed(4)}, ${lastLoc.lng.toFixed(4)}` : 'Using campus location';
+      const note = document.createElement('div');
+      note.className = 'text-xs text-gray-600 mt-2';
+      note.textContent = s;
+      hint.innerHTML = ''; hint.appendChild(note);
+    }
+
+    // Bindings
+    go.addEventListener('click', runSearch);
+    q.addEventListener('keydown', (e)=>{ if(e.key==='Enter') runSearch(); });
+    useLoc.addEventListener('click', useLocationNow);
+
+    // First paint: encourage search
+    hint.textContent = 'Tip: Try “healthy thai open now”, “$$ ramen”, or “vegan bowls near me”.';
+  </script>
+</body>
+</html>

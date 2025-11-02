@@ -28,6 +28,11 @@
     .step-dot.active { background:#f59e0b }  /* amber */
     .step-dot.done   { background:#16a34a }  /* green */
     .step-dot.error  { background:#dc2626 }  /* red */
+    /* pretty toggle */
+    .switch { position: relative; width: 56px; height: 28px; background:#e5e7eb; border-radius:999px; transition:.2s; }
+    .switch:after { content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; background:white; border-radius:999px; transition:.2s; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+    input:checked + .switch { background:#16a34a; }
+    input:checked + .switch:after { transform: translateX(28px); }
   </style>
 </head>
 <body class="bg-gradient-to-b from-amber-50 to-white text-gray-900">
@@ -43,7 +48,14 @@
         <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-orange-600 text-white">🍽️</span>
         OSU Dining Agent
       </a>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-4">
+        <!-- Web Search toggle (navigates to separate page) -->
+        <label class="flex items-center gap-2 text-sm">
+          <span>Web Search</span>
+          <input id="websearch-toggle" type="checkbox" class="hidden">
+          <span class="switch cursor-pointer"></span>
+        </label>
+
         <a href="/cart/" class="relative text-sm px-3 py-2 rounded-xl bg-black text-white hover:opacity-90 flex items-center gap-2">
           🛒 <span id="cart-count" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-600 text-xs">0</span>
           <span class="hidden sm:inline">Cart</span>
@@ -56,21 +68,26 @@
   <!-- Agent Shell -->
   <main class="max-w-5xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
     <!-- Chat -->
-    <section class="lg:col-span-2 bg-white rounded-2xl border shadow-elev">
-      <div class="hdr-grad h-14 px-4 flex items-center justify-between rounded-t-2xl">
+    <section class="lg:col-span-2 bg-white rounded-2xl border shadow-elev overflow-hidden">
+      <div class="hdr-grad h-14 px-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="font-bold">Dining Assistant</div>
           <span class="inline-flex items-center gap-1 text-xs opacity-90">
             <span class="inline-block w-2 h-2 rounded-full bg-green-400"></span> online
           </span>
         </div>
-        <div class="flex items-center gap-2">
-          <label class="text-xs inline-flex items-center gap-1"><input type="checkbox" id="auto-order"> Auto-order</label>
-          <label class="text-xs inline-flex items-center gap-1"><input type="checkbox" id="speak-replies"> 🔊 Speak</label>
+        <div class="flex items-center gap-3">
+          <div class="text-xs inline-flex items-center gap-1">
+            <input type="checkbox" id="auto-order"> <label for="auto-order">Auto-order</label>
+          </div>
+          <div class="text-xs inline-flex items-center gap-1">
+            <input type="checkbox" id="speak-replies"> <label for="speak-replies">🔊 Speak</label>
+          </div>
         </div>
       </div>
 
-      <div id="chat-body" class="h-[60vh] md:h-[64vh] overflow-y-auto p-3">
+      <!-- Chat body -->
+      <div id="chat-body" class="h-[58vh] md:h-[62vh] overflow-y-auto p-3">
         <div class="p-1">
           <div class="bubble bubble-bot inline-block">
             Hi! Tell me what you’re craving (e.g., “spicy vegan”, “under $12 bowls”). Say “order” to add.
@@ -86,7 +103,8 @@
         </div>
       </div>
 
-      <div class="h-22 border-t bg-white px-3 py-2 flex items-center gap-2 rounded-b-2xl">
+      <!-- Composer -->
+      <div class="h-22 border-t bg-white px-3 py-2 flex items-center gap-2">
         <button type="button" id="mic-btn" class="px-3 py-2 rounded-xl border" title="Voice input">🎙️</button>
         <input id="chat-input" class="flex-1 border rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500" placeholder="Type or use the mic…" autocomplete="off"/>
         <button id="chat-send" class="btn btn-dark">Send</button>
@@ -109,7 +127,7 @@
         <ul class="list-disc pl-5 text-sm text-gray-700 mt-2 space-y-1">
           <li>Say “order” to automatically add the top result and start checkout.</li>
           <li>Use price or diet filters: “under $12”, “halal”, “vegan high protein”.</li>
-          <li>Turn on <em>Auto-order</em> to always add & pay.</li>
+          <li>Want places nearby? Toggle <strong>Web Search</strong> above.</li>
         </ul>
       </div>
     </aside>
@@ -142,9 +160,9 @@
         <div id="flow-login" class="mt-4 hidden">
           <div class="text-sm text-gray-700">You need to sign in before paying.</div>
           <div class="mt-2 flex items-center gap-2">
-            <a href="{% provider_login_url 'google' %}"
-               class="inline-flex items-center px-3 py-2 rounded-xl border">
-              <img src="https://www.svgrepo.com/media/cache/256/6f/3a/6f3a727a5e9f5fc8a908233f9d5c9b86.png" width="16" height="16" class="mr-2" alt=""> Continue with Google
+            <a href="{% provider_login_url 'google' %}" class="inline-flex items-center px-3 py-2 rounded-xl border">
+              <img src="https://www.svgrepo.com/media/cache/256/6f/3a/6f3a727a5e9f5fc8a908233f9d5c9b86.png" width="16" height="16" class="mr-2" alt="">
+              Continue with Google
             </a>
             <a href="/accounts/login/" class="text-sm underline">Use email</a>
           </div>
@@ -161,24 +179,29 @@
     const csrftoken = getCookie('csrftoken');
     const cartCount = document.getElementById('cart-count');
     const mini = document.getElementById('mini');
+    const chatBody = document.getElementById('chat-body');
+
+    // Toggle navigates to dedicated websearch page
+    const webToggle = document.getElementById('websearch-toggle');
+    webToggle.addEventListener('change', ()=> {
+      if (webToggle.checked) window.location.href = "/websearch/";
+    });
 
     function pushMsg(role, text){
-      const body = document.getElementById('chat-body');
       const wrap = document.createElement('div');
       wrap.className = 'p-2 ' + (role === 'user' ? 'text-right' : 'text-left');
       const bubble = document.createElement('div');
       bubble.className = 'bubble ' + (role === 'user' ? 'bubble-user' : 'bubble-bot');
       bubble.textContent = text;
       wrap.appendChild(bubble);
-      body.appendChild(wrap);
-      body.scrollTop = body.scrollHeight;
+      chatBody.appendChild(wrap);
+      chatBody.scrollTop = chatBody.scrollHeight;
       if (role === 'bot') speak(text);
     }
     function showTyping(){
-      const body = document.getElementById('chat-body');
       const el = document.createElement('div'); el.id='typing'; el.className='p-2';
       el.innerHTML = `<div class="bubble bubble-bot inline-block"><span class="typing"><i></i><i></i><i></i></span></div>`;
-      body.appendChild(el); body.scrollTop = body.scrollHeight;
+      chatBody.appendChild(el); chatBody.scrollTop = chatBody.scrollHeight;
     }
     function hideTyping(){ document.getElementById('typing')?.remove(); }
 
@@ -216,50 +239,6 @@
       }catch(e){ console.error(e); }
     }
 
-    // ---- Suggestions UI ----
-    function renderSuggestionList(items, { readOnly = false } = {}){
-      if(!items?.length) return;
-      const body = document.getElementById('chat-body');
-      const wrap = document.createElement('div'); wrap.className='p-2 text-left';
-      const grid = document.createElement('div'); grid.className='grid gap-2';
-      items.forEach(x=>{
-        const el = document.createElement('div');
-        el.className = 'item-pill flex items-center justify-between';
-        el.innerHTML = `
-          <div>
-            <div class="font-semibold">${x.name}</div>
-            <div class="text-xs text-gray-500">$${Number(x.price).toFixed(2)}</div>
-          </div>
-          <div class="flex items-center gap-2">
-            <button class="btn btn-ghost text-xs" data-view="${x.id}">Details</button>
-            ${readOnly ? '' : `<button class="btn btn-dark text-xs" data-add="${x.id}">Add</button>`}
-          </div>`;
-        grid.appendChild(el);
-      });
-      wrap.appendChild(grid);
-      body.appendChild(wrap);
-      body.scrollTop = body.scrollHeight;
-
-      if(!readOnly){
-        wrap.querySelectorAll('[data-add]').forEach(b=>{
-          b.addEventListener('click', async ()=>{
-            if(b.disabled) return; b.disabled=true;
-            try{
-              const id = Number(b.getAttribute('data-add'));
-              await fetch('/api/cart/', {
-                method:'POST',
-                headers:{'Content-Type':'application/json','X-CSRFToken': csrftoken},
-                credentials:'same-origin',
-                body: JSON.stringify({menu_item:id, qty:1})
-              });
-              pushMsg('bot','Added to cart.');
-              refreshCart();
-            } finally { setTimeout(()=>b.disabled=false,600); }
-          });
-        });
-      }
-    }
-
     // ---- Order flow modal helpers ----
     const flowEl    = document.getElementById('flow');
     const flowClose = document.getElementById('flow-close');
@@ -289,7 +268,7 @@
     function showFlowError(msg){ if(flowErr){ flowErr.textContent=msg; flowErr.classList.remove('hidden'); } }
     function requireLoginInFlow(){ stepState(stepPay,'error'); flowLogin?.classList.remove('hidden'); }
 
-    // ---- Chat send logic ----
+    // ---- Chat ordering (Menu-only) ----
     const autoOrderEl = document.getElementById('auto-order');
     function wantsOrder(text){ return /\b(order now|place order|checkout|confirm order|confirm|order)\b/i.test(text.trim()); }
 
@@ -311,7 +290,7 @@
           flowOpen();
           stepState(stepAdd,'active');
 
-          // Add items first
+          // Add items
           const addResp = await fetch(url, {
             method:'POST',
             headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},
@@ -333,7 +312,6 @@
           }
           stepState(stepAdd,'done');
 
-          // Show items visibly
           if (add.added?.length){
             flowItems.innerHTML = add.added.map(x => `<li>• ${x.name}</li>`).join('');
             const s = add.added.map(x=>`• ${x.name}`).join('\n');
@@ -341,11 +319,26 @@
           }
           if (add.suggestions?.length){
             pushMsg('bot','You might also like (not added):');
-            renderSuggestionList(add.suggestions, { readOnly:true });
+            const wrap = document.createElement('div'); wrap.className='p-2 text-left';
+            const grid = document.createElement('div'); grid.className='grid gap-2';
+            add.suggestions.forEach(x=>{
+              const el = document.createElement('div');
+              el.className = 'item-pill flex items-center justify-between';
+              el.innerHTML = `
+                <div>
+                  <div class="font-semibold">${x.name}</div>
+                  <div class="text-xs text-gray-500">$${Number(x.price).toFixed(2)}</div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="btn btn-ghost text-xs" data-view="${x.id}">Details</button>
+                  <button class="btn btn-dark text-xs" data-add="${x.id}">Add</button>
+                </div>`;
+              grid.appendChild(el);
+            });
+            wrap.appendChild(grid); chatBody.appendChild(wrap);
           }
           refreshCart();
 
-          // If backend gives checkout_url, jump
           if(add.checkout_url){
             stepState(stepPay,'done'); stepState(stepGo,'active');
             window.location.href = add.checkout_url; return;
@@ -371,7 +364,7 @@
           window.location.href = pay.checkout_url; return;
         }
 
-        // Suggestions path
+        // Suggestions only
         const r = await fetch(url, {
           method:'POST',
           headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},
@@ -382,8 +375,43 @@
         hideTyping();
 
         if(!r.ok){ pushMsg('bot','Sorry—something went wrong.'); return; }
-        if(j.suggestions?.length){ pushMsg('bot','You might like these:'); renderSuggestionList(j.suggestions, {readOnly:false}); }
-        else { pushMsg('bot', j.reply || "Tell me a flavor, diet, or price range and I’ll suggest dishes."); }
+        if(j.suggestions?.length){
+          const wrap = document.createElement('div'); wrap.className='p-2 text-left';
+          const grid = document.createElement('div'); grid.className='grid gap-2';
+          j.suggestions.forEach(x=>{
+            const el = document.createElement('div');
+            el.className = 'item-pill flex items-center justify-between';
+            el.innerHTML = `
+              <div>
+                <div class="font-semibold">${x.name}</div>
+                <div class="text-xs text-gray-500">$${Number(x.price).toFixed(2)}</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="btn btn-ghost text-xs" data-view="${x.id}">Details</button>
+                <button class="btn btn-dark text-xs" data-add="${x.id}">Add</button>
+              </div>`;
+            grid.appendChild(el);
+          });
+          wrap.appendChild(grid);
+          chatBody.appendChild(wrap);
+          chatBody.scrollTop = chatBody.scrollHeight;
+
+          wrap.querySelectorAll('[data-add]').forEach(b=>{
+            b.addEventListener('click', async ()=>{
+              if(b.disabled) return; b.disabled=true;
+              try{
+                const id = Number(b.getAttribute('data-add'));
+                await fetch('/api/cart/', {
+                  method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken': csrftoken},
+                  credentials:'same-origin', body: JSON.stringify({menu_item:id, qty:1})
+                });
+                pushMsg('bot','Added to cart.'); refreshCart();
+              } finally { setTimeout(()=>b.disabled=false,600); }
+            });
+          });
+        } else {
+          pushMsg('bot', j.reply || "Tell me a flavor, diet, or price range and I’ll suggest dishes.");
+        }
         if(j.follow_up) pushMsg('bot', j.follow_up);
         refreshCart();
       }catch(e){
@@ -398,12 +426,12 @@
       if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSend(); }
     });
     document.querySelectorAll('.qchip').forEach(b=> b.addEventListener('click', ()=>{
-      document.getElementById('chat-input').value = b.dataset.q; document.getElementById('chat-input').focus();
+      document.getElementById('chat-input').value = b.dataset.q || b.textContent;
+      document.getElementById('chat-input').focus();
     }));
 
     // Manual checkout button
     document.getElementById('checkout').addEventListener('click', async ()=>{
-      // quick visual flow without adding
       flowOpen(); stepState(stepAdd,'done'); stepState(stepPay,'active');
       try{
         const r = await fetch('/api/create-checkout-session/', {

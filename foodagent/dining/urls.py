@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import RecommendationAPI, MenuAPI, CartAPI, AgentAPI, landing, AgentOrderAPI
+from .views import RecommendationAPI, MenuAPI, CartAPI, AgentAPI, landing, AgentOrderAPI, WebSearchAPI
 from .checkout import cart_page, create_checkout_session, qr_for_url, remove_cart_item, set_cart_qty, checkout_success, checkout_cancel
 from . import billing, views
 from .webhooks import stripe_webhook
@@ -15,6 +15,7 @@ urlpatterns = [
    path('', landing, name='landing'),
     path('cart/', cart_page, name='cart'),
     path('agent/', views.agent_page, name='agent'),
+    path("websearch/", views.websearch_page, name="websearch"),
     path('api/cart/item/<int:item_id>/delete/', remove_cart_item, name='cart_item_delete'),
     path('api/cart/item/<int:item_id>/set-qty/', set_cart_qty, name='cart_item_set_qty'),
     path('api/create-checkout-session/', create_checkout_session, name='create_checkout_session'),
@@ -41,5 +42,6 @@ urlpatterns = [
     path("api/billing/has-card/", billing.has_card, name="billing-has-card"),
     path("api/pay-now/",           billing.pay_now,  name="billing-pay-now"),
     path("stripe/webhook/", stripe_webhook, name="stripe-webhook"),
+    path('api/websearch/', WebSearchAPI.as_view(), name='api-websearch'),
 
 ]
