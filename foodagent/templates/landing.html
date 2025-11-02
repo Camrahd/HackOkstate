@@ -370,6 +370,32 @@
       });
     })();
   </script>
+  <script>
+(function () {
+  function cameFromBackForward() {
+    // Modern browsers
+    const nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+    return nav && nav.type === 'back_forward';
+  }
+
+  // Fires when you come back to a page (including bfcache restores)
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted || cameFromBackForward()) {
+      // Hard refresh to re-run your JS and refetch /api/cart/
+      window.location.reload();
+    } else if (typeof refreshCartCount === 'function') {
+      // First load: still make sure badge is correct
+      refreshCartCount();
+    }
+  });
+
+  // Optional extra: some SPA flows trigger history changes without bfcache
+  window.addEventListener('popstate', function () {
+    window.location.reload();
+  });
+})();
+</script>
+
 
   <!-- Bot Launcher -->
   <a href="/agent/" id="bot-fab"
