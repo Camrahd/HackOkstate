@@ -7,7 +7,9 @@ from .webhooks import stripe_webhook
 from . import views_account
 # urls.py
 from django.urls import path
+from . import views
 from .views_account import profile_settings, order_history, billing_cards
+from dining import views as dining_views
 router = DefaultRouter()
 router.register('menu', MenuAPI, basename='menu')
 
@@ -16,11 +18,13 @@ urlpatterns = [
     path('cart/', cart_page, name='cart'),
     path('agent/', views.agent_page, name='agent'),
     path("websearch/", views.websearch_page, name="websearch"),
+    path("", dining_views.home, name="home"),
     path('api/cart/item/<int:item_id>/delete/', remove_cart_item, name='cart_item_delete'),
     path('api/cart/item/<int:item_id>/set-qty/', set_cart_qty, name='cart_item_set_qty'),
     path('api/create-checkout-session/', create_checkout_session, name='create_checkout_session'),
     path('qr/', qr_for_url, name='qr_for_url'),
     path("checkout/success/", checkout_success, name="checkout_success"),
+    path('api/reverse-geocode', views.reverse_geocode, name='reverse_geocode'),
     path("checkout/cancel/", checkout_cancel, name="checkout_cancel"),
 
     path('api/recommendations/', RecommendationAPI.as_view()),

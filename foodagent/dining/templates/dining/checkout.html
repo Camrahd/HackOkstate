@@ -47,40 +47,158 @@
 
           <!-- Address form (hidden unless Delivery) -->
           <div id="addr" class="mt-4 hidden">
+            <div class="flex items-center gap-3 mb-3">
+              <button id="useLocation" type="button" class="text-sm underline">Use my location</button>
+              <span class="text-xs text-gray-500">We’ll fill your address from GPS (you can edit it).</span>
+            </div>
+
+            <!-- Hidden coords (posted with form if you want) -->
+            <input type="hidden" id="lat" name="lat">
+            <input type="hidden" id="lng" name="lng">
+
             <div class="grid md:grid-cols-2 gap-3">
               <div>
                 <label class="text-xs text-gray-600">Full name</label>
-                <input id="name" class="mt-1 w-full px-3 py-2 rounded-xl border" placeholder="Your name" />
+                <input
+                  id="name"
+                  name="full_name"
+                  class="mt-1 w-full px-3 py-2 rounded-xl border"
+                  placeholder="Your name"
+                  value="{{ request.user.get_full_name|default:request.user.username }}"
+                  autocomplete="name"
+                  />
               </div>
+
               <div>
                 <label class="text-xs text-gray-600">Phone</label>
-                <input id="phone" class="mt-1 w-full px-3 py-2 rounded-xl border" placeholder="(555) 555-5555" />
+                <input
+                  id="phone"
+                  name="phone"
+                  class="mt-1 w-full px-3 py-2 rounded-xl border"
+                  placeholder="(555) 555-5555"
+                  autocomplete="tel"
+                  />
               </div>
+
               <div class="md:col-span-2">
                 <label class="text-xs text-gray-600">Address line 1</label>
-                <input id="line1" class="mt-1 w-full px-3 py-2 rounded-xl border" placeholder="123 Main St" />
+                <input
+                  id="line1"
+                  name="address_line1"
+                  class="mt-1 w-full px-3 py-2 rounded-xl border"
+                  placeholder="123 Main St"
+                  autocomplete="address-line1"
+                  />
               </div>
+
               <div class="md:col-span-2">
                 <label class="text-xs text-gray-600">Address line 2 <span class="text-gray-400">(optional)</span></label>
-                <input id="line2" class="mt-1 w-full px-3 py-2 rounded-xl border" placeholder="Apt, suite, etc." />
+                <input
+                  id="line2"
+                  name="address_line2"
+                  class="mt-1 w-full px-3 py-2 rounded-xl border"
+                  placeholder="Apt, suite, etc."
+                  autocomplete="address-line2"
+                  />
               </div>
+
               <div>
                 <label class="text-xs text-gray-600">City</label>
-                <input id="city" class="mt-1 w-full px-3 py-2 rounded-xl border" placeholder="City" />
+                <input
+                  id="city"
+                  name="city"
+                  class="mt-1 w-full px-3 py-2 rounded-xl border"
+                  placeholder="City"
+                  autocomplete="address-level2"
+                  />
               </div>
+
               <div>
                 <label class="text-xs text-gray-600">State</label>
-                <input id="state" class="mt-1 w-full px-3 py-2 rounded-xl border" placeholder="State" />
+                <input
+                  id="state"
+                  name="state"
+                  class="mt-1 w-full px-3 py-2 rounded-xl border"
+                  placeholder="State"
+                  autocomplete="address-level1"
+                  />
               </div>
+
               <div>
                 <label class="text-xs text-gray-600">Postal code</label>
-                <input id="postal" class="mt-1 w-full px-3 py-2 rounded-xl border" placeholder="ZIP" />
+                <input
+                  id="postal"
+                  name="postal_code"
+                  class="mt-1 w-full px-3 py-2 rounded-xl border"
+                  placeholder="ZIP"
+                  autocomplete="postal-code"
+                  />
               </div>
             </div>
+
             <div class="mt-3">
               <label class="text-xs text-gray-600">Notes for the kitchen <span class="text-gray-400">(optional)</span></label>
-              <textarea id="notes" class="mt-1 w-full px-3 py-2 rounded-xl border" rows="2" placeholder="Add extra requests or delivery notes"></textarea>
+              <textarea
+                id="notes"
+                name="notes"
+                class="mt-1 w-full px-3 py-2 rounded-xl border"
+                rows="2"
+                placeholder="Add extra requests or delivery notes"
+                ></textarea>
             </div>
+
+            <!-- Inline JS to fill from GPS; requires your /api/reverse-geocode view -->
+            <script>
+              (function () {
+                const btn = document.getElementById('useLocation');
+                if (!btn) return;
+
+                function getCsrfToken() {
+                  const m = document.cookie.match(/csrftoken=([^;]+)/);
+                  return m ? m[1] : '';
+                }
+
+                async function reverseGeocode(lat, lng) {
+                  const res = await fetch(`/api/reverse-geocode?lat=${lat}&lng=${lng}`, {
+                    headers: { 'X-CSRFToken': getCsrfToken() }
+                  });
+                  if (!res.ok) throw new Error('Reverse geocode failed');
+                  return await res.json(); // { address_line1, address_line2, city, state, postal_code }
+                }
+
+                async function fillFromGPS() {
+                  if (!('geolocation' in navigator)) {
+                    alert('Geolocation is not supported on this browser/device.');
+                    return;
+                  }
+                  navigator.geolocation.getCurrentPosition(async pos => {
+                    try {
+                      const lat = pos.coords.latitude;
+                      const lng = pos.coords.longitude;
+                      document.getElementById('lat').value = lat;
+                      document.getElementById('lng').value = lng;
+
+                      const data = await reverseGeocode(lat, lng);
+                      if (data.address_line1) document.getElementById('line1').value = data.address_line1;
+                      document.getElementById('line2').value = data.address_line2 || '';
+                      if (data.city)          document.getElementById('city').value = data.city;
+                      if (data.state)         document.getElementById('state').value = data.state;
+                      if (data.postal_code)   document.getElementById('postal').value = data.postal_code;
+                    } catch (e) {
+                      console.warn(e);
+                      alert('Could not fill address from GPS. Please allow location access or fill manually.');
+                    }
+                  }, err => {
+                    console.warn(err);
+                    alert('Location permission denied or unavailable.');
+                  }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+                }
+
+                btn.addEventListener('click', fillFromGPS);
+              })();
+            </script>
+          </div>
+
           </div>
         </div>
 
@@ -340,5 +458,6 @@
     // Initial calc + disable state
     recalc();
   </script>
+  <script src="{% static 'dining/checkout.js' %}"></script>
 </body>
 </html>

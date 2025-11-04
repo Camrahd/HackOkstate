@@ -192,3 +192,60 @@ class WebSearchAPI(APIView):
             return Response({"error": str(e)}, status=500)
 
         return Response(results)
+    
+
+# dining/views.py
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from .models import MenuItem  # model behind dining_menuitem
+# If you have tags/restaurant FKs, prefetch/select_related to speed things up
+
+def home(request):
+    qs = (
+        MenuItem.objects
+        .filter(is_available=True)         # only items you want shown
+        .only("id", "name", "price", "description")  # light columns
+        .order_by("name")
+    )
+
+    paginator = Paginator(qs, 24)  # 24 cards per page
+    page_number = request.GET.get("page") or 1
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "landing.html", {
+        "menu_page": page_obj,      # for pagination controls
+        "menu_items": page_obj.object_list,  # the items to render
+    })
+
+import requests
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+
+@require_GET
+def reverse_geocode(request):
+    lat = request.GET.get('lat')
+    lng = request.GET.get('lng')
+    if not lat or not lng:
+        return JsonResponse({'error': 'lat/lng required'}, status=400)
+
+    try:
+        r = requests.get(
+            'https://nominatim.openstreetmap.org/reverse',
+            params={'format': 'jsonv2', 'lat': lat, 'lon': lng, 'addressdetails': 1},
+            headers={'User-Agent': 'OSU-Dining/1.0 (contact@example.com)'}
+        )
+        r.raise_for_status()
+        j = r.json()
+        a = j.get('address', {})
+
+        result = {
+            'address_line1': f"{a.get('house_number','')} {a.get('road','')}".strip(),
+            'address_line2': '',
+            'city': a.get('city') or a.get('town') or a.get('village') or '',
+            'state': a.get('state') or '',
+            'postal_code': a.get('postcode') or '',
+        }
+        return JsonResponse(result)
+    except Exception:
+        return JsonResponse({'error': 'reverse-geocode failed'}, status=500)
+
